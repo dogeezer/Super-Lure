@@ -1,70 +1,63 @@
-<script>
-document.addEventListener("DOMContentLoaded", () => {
-  const shippingSelect = document.getElementById('shipping'); // your shipping dropdown
-  const priceInput = document.getElementById('price'); // product price
-  const totalEl = document.getElementById('total'); // total display
-  const postalInput = document.getElementById('postal'); // customer postal code input
+const express = require('express');
+const bodyParser = require('body-parser');
+const fetch = require('node-fetch');
+const xml2js = require('xml2js');
 
-  async function loadShippingRates(postalCode) {
-    try {
-      const res = await fetch('/api/canadapost-rate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          weight: 0.015,
-          length: 15,
-          width: 5,
-          height: 10,
-          destinationPostalCode: postalCode
-        })
-      });
+const app = express();
+app.use(bodyParser.json());
 
-      const text = await res.text();
-      const parser = new DOMParser();
-      const xml = parser.parseFromString(text, 'application/xml');
-      const ns = "http://www.canadapost.ca/ws/ship/rate-v4";
-      const quotes = Array.from(xml.getElementsByTagNameNS(ns, 'price-quote'));
+app.post('/api/canadapost-rate', async (req, res) => {
+  const { destinationPostalCode, serviceCode, weight, dimensions, originPostalCode } = req.body;
 
-      shippingSelect.innerHTML = '';
-      if (!quotes.length) {
-        shippingSelect.innerHTML = '<option value="">No rates available</option>';
-        return;
-      }
+  const xmlBody = `
+    <mailing-scenario xmlns="http://www.canadapost.ca/ws/ship/rate-v4">
+      <customer-number>0001223271</customer-number>
+      <parcel-characteristics>
+        <weight>${weight}</weight>
+        <dimensions>
+          <length>${dimensions.length}</length>
+          <width>${dimensions.width}</width>
+          <height>${dimensions.height}</height>
+        </dimensions>
+      </parcel-characteristics>
+      <origin-postal-code>${originPostalCode}</origin-postal-code>
+      <destination>
+        <domestic>
+          <postal-code>${destinationPostalCode}</postal-code>
+        </domestic>
+      </destination>
+    </mailing-scenario>
+  `;
 
-      shippingSelect.innerHTML = '<option value="">-- Select Shipping --</option>';
-      quotes.forEach(q => {
-        const name = q.getElementsByTagNameNS(ns, 'service-name')[0]?.textContent || 'Unknown';
-        const due = parseFloat(q.getElementsByTagNameNS(ns, 'due')[0]?.textContent || 0);
-        const option = document.createElement('option');
-        option.value = due;
-        option.textContent = `${name} - $${due.toFixed(2)}`;
-        shippingSelect.appendChild(option);
-      });
+  try {
+    const response = await fetch('https://soa-gw.canadapost.ca/rs/ship/rate-v4', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/vnd.cpc.ship.rate-v4+xml',
+        'Accept': 'application/vnd.cpc.ship.rate-v4+xml',
+        'Authorization': 'Basic ' + Buffer.from('username:password').toString('base64')
+      },
+      body: xmlBody
+    });
 
-      updateTotal();
-    } catch (err) {
-      console.error(err);
-      shippingSelect.innerHTML = '<option value="">Error loading rates</option>';
-    }
+    const xml = await response.text();
+
+    // Convert XML to JSON
+    xml2js.parseString(xml, { explicitArray: false }, (err, result) => {
+      if (err) return res.json({ error: 'Failed to parse Canada Post response' });
+
+      // Find the price quote matching the requested service
+      const quotes = result['price-quotes']['price-quote'];
+      const quoteArray = Array.isArray(quotes) ? quotes : [quotes];
+      const priceQuote = quoteArray.find(q => q['service-code'] === serviceCode);
+
+      res.json({ priceQuote });
+    });
+
+  } catch (err) {
+    console.error(err);
+    res.json({ error: 'Failed to fetch Canada Post rate' });
   }
-
-  function updateTotal() {
-    const price = parseFloat(priceInput.value) || 0;
-    const shipping = parseFloat(shippingSelect.value) || 0;
-    totalEl.textContent = `Total: $${(price + shipping).toFixed(2)}`;
-  }
-
-  // Update total when shipping option or price changes
-  shippingSelect.addEventListener('change', updateTotal);
-  priceInput.addEventListener('input', updateTotal);
-
-  // Load rates when postal code changes
-  postalInput.addEventListener('input', () => {
-    const code = postalInput.value.trim();
-    if (code.length >= 6) loadShippingRates(code); // minimal length check
-  });
-
-  // Initial load with default postal code if you have one
-  if (postalInput.value) loadShippingRates(postalInput.value.trim());
 });
-</script>
+
+app.listen(10000, () => console.log('N0B1M0 server running on port 10000'));
