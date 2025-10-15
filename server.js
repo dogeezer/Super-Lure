@@ -1,17 +1,37 @@
-// --- Canada Post Rate API (Debug Version) ---
+import express from 'express';
+import bodyParser from 'body-parser';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+// --- 1. Create app ---
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+// --- 2. Resolve __dirname in ES modules ---
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// --- 3. Middleware ---
+app.use(bodyParser.json());
+app.use(express.static(path.join(__dirname, 'public')));
+
+// --- 4. Canada Post credentials ---
+const CANADAPOST_USERNAME = '399dd571f6bd9717';
+const CANADAPOST_PASSWORD = '0c44766df20c50f62771a9';
+const CANADAPOST_URL = 'https://ct.soa-gw.canadapost.ca/rs/ship/price';
+
+// --- 5. Canada Post Rate API ---
 app.post('/api/canadapost-rate', async (req, res) => {
   const { postal, country, weight, length, width, height } = req.body;
 
-  console.log('Received request for shipping rates:', req.body);
+  console.log('Received request:', req.body);
 
-  // Validate fields
   if (!postal || !weight || !length || !width || !height) {
-    console.error('Missing fields:', { postal, weight, length, width, height });
+    console.error('Missing fields');
     return res.status(400).json({ error: 'Missing fields' });
   }
 
   try {
-    // Build XML
     const xml = `
 <mailing-scenario xmlns="http://www.canadapost.ca/ws/ship/rate-v4">
   <customer-number>0001223271</customer-number>
@@ -32,8 +52,6 @@ app.post('/api/canadapost-rate', async (req, res) => {
 </mailing-scenario>
 `;
 
-    console.log('Sending XML to Canada Post:', xml);
-
     const response = await fetch(CANADAPOST_URL, {
       method: 'POST',
       headers: {
@@ -45,13 +63,12 @@ app.post('/api/canadapost-rate', async (req, res) => {
     });
 
     const text = await response.text();
-    console.log('Canada Post raw response:', text);
+    console.log('Canada Post response:', text);
 
     if (!response.ok) {
       return res.status(500).json({ error: 'Canada Post API error', details: text });
     }
 
-    // Minimal parsing
     const rates = [];
     const regex = /<service-name>(.*?)<\/service-name>[\s\S]*?<price>(.*?)<\/price>/g;
     let match;
@@ -63,7 +80,15 @@ app.post('/api/canadapost-rate', async (req, res) => {
     res.json(rates);
 
   } catch (err) {
-    console.error('Server error:', err);
+    console.error(err);
     res.status(500).json({ error: 'Server error', details: err.message });
   }
 });
+
+// --- 6. Routes ---
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
+app.get('/checkout', (req, res) => res.sendFile(path.join(__dirname, 'public', 'checkout.html')));
+app.get('/thankyou', (req, res) => res.sendFile(path.join(__dirname, 'public', 'thankyou.html')));
+
+// --- 7. Start server ---
+app.listen(PORT, () => console.log(`N0B1M0 server running on port ${PORT}`));
