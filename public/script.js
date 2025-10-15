@@ -1,139 +1,93 @@
-/* -------------------------
-   CART (from localStorage)
-   ------------------------- */
 let cart = JSON.parse(localStorage.getItem('cart')) || [];
 
 /* -------------------------
-   CONFIG: shipping & tax
-   ------------------------- */
-const SHIPPING_PER_ITEM = 1.28;
-const DEFAULT_COUNTRY_TAX = 0.10;
-const countryTaxRates = { "CA":0.0,"US":0.0,"GB":0.20,"FR":0.20,"DE":0.19,"IT":0.22,"ES":0.21,"AU":0.10,"JP":0.10,"IN":0.18,"CN":0.13,"BR":0.12,"MX":0.16,"RU":0.20,"ZA":0.15,"NZ":0.15,"CH":0.077 };
-const subdivisions = {
-  "CA": {"ON":{name:"Ontario",tax:0.13},"QC":{name:"Quebec",tax:0.14975},"BC":{name:"British Columbia",tax:0.12},"AB":{name:"Alberta",tax:0.05}},
-  "US": {"CA":{name:"California",tax:0.0725},"NY":{name:"New York",tax:0.04},"TX":{name:"Texas",tax:0.0625}}
-};
-
-/* -------------------------
    DOM refs
-   ------------------------- */
-const cartSummaryEl = document.getElementById('cart-summary');
-const cartSummary2El = document.getElementById('cart-summary-2');
-const countryEl = document.getElementById('country');
-const subdivisionEl = document.getElementById('subdivision');
-const countryCodeEl = document.getElementById('country_code');
+------------------------- */
+const cartIcon=document.getElementById('cart-icon');
+const cartPage=document.getElementById('cart-page');
+const mainSections=document.getElementById('main-content-sections');
+const backBtn=document.getElementById('back-to-shop-btn');
+const cartList=document.getElementById('cart-items-list');
+const cartSummaryEl=document.getElementById('cart-summary');
+const proceedBtn=document.getElementById('proceed-to-checkout-btn');
 
 /* -------------------------
-   Populate countries
-   ------------------------- */
-const countryOptions = [
-  { iso:"CA", name:"Canada (+1)", dial:"+1" },
-  { iso:"US", name:"United States (+1)", dial:"+1" },
-  { iso:"GB", name:"United Kingdom (+44)", dial:"+44" },
-  { iso:"FR", name:"France (+33)", dial:"+33" },
-  { iso:"DE", name:"Germany (+49)", dial:"+49" },
-  { iso:"IT", name:"Italy (+39)", dial:"+39" }
-];
-
-function populateCountries() {
-  countryOptions.forEach(co=>{
-    const opt = document.createElement('option');
-    opt.value = co.iso;
-    opt.dataset.dial = co.dial;
-    opt.textContent = co.name;
-    countryEl.appendChild(opt);
-  });
-  countryOptions.forEach(co=>{
-    const opt = document.createElement('option');
-    opt.value = co.dial;
-    opt.textContent = co.name;
-    countryCodeEl.appendChild(opt);
-  });
-  countryEl.value='CA'; countryCodeEl.value='+1';
+   Cart functions
+------------------------- */
+function toggleCart(show){
+  if(show===undefined) show=cartPage.style.display==='none'||cartPage.style.display===''; 
+  if(show){ mainSections.style.display='none'; cartPage.style.display='block'; renderCart(); }
+  else { mainSections.style.display='block'; cartPage.style.display='none'; }
 }
-populateCountries();
 
-function populateSubdivisions(countryIso) {
-  subdivisionEl.innerHTML='';
-  if (!countryIso){ subdivisionEl.innerHTML='<option value="">-- Select country first --</option>'; return;}
-  if (subdivisions[countryIso]){
-    const map=subdivisions[countryIso];
-    const empty=document.createElement('option'); empty.value=''; empty.textContent='-- Select state/province --';
-    subdivisionEl.appendChild(empty);
-    Object.keys(map).forEach(code=>{
-      const o=document.createElement('option'); o.value=code; o.textContent=map[code].name + ` (${(map[code].tax*100).toFixed(2)}%)`; subdivisionEl.appendChild(o);
+function addToCart(product){
+  const index=cart.findIndex(p=>p.name===product.name);
+  if(index>-1){ cart[index].qty+=1; }
+  else { cart.push({...product,qty:1}); }
+  localStorage.setItem('cart', JSON.stringify(cart));
+  renderCart();
+}
+
+function removeItem(index){ cart.splice(index,1); localStorage.setItem('cart', JSON.stringify(cart)); renderCart(); }
+
+function calcSubtotal(){ return cart.reduce((s,i)=>s+(i.price*i.qty),0); }
+function totalQuantity(){ return cart.reduce((s,i)=>s+(i.qty||0),0); }
+
+/* -------------------------
+   Canada Post API
+------------------------- */
+async function fetchCanadaPostRate(destinationPostal, weight=0.2, length=10, width=5, height=3){
+  try {
+    const res = await fetch('/shipping',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({destination_postal:destinationPostal, weight, length, width, height})
     });
-    subdivisionEl.disabled=false;
-  } else { const o=document.createElement('option'); o.value='__none'; o.textContent='No state/province'; subdivisionEl.appendChild(o); subdivisionEl.disabled=true;}
+    const data = await res.json();
+    if(data.success && data.rates.length>0){ return parseFloat(data.rates[0].price); }
+    return 1.28;
+  } catch(err){
+    console.error(err);
+    return 1.28;
+  }
 }
 
 /* -------------------------
-   Cart rendering
-   ------------------------- */
-function totalQuantity(){ return cart.reduce((s,i)=>s+(i.qty||0),0);}
-function calcSubtotal(){ return cart.reduce((s,i)=>s+(i.price*i.qty),0);}
-function calcShipping(){ return SHIPPING_PER_ITEM*totalQuantity();}
-function getSelectedTaxRate(){ const countryIso=countryEl.value; const sub=subdivisionEl.value; if(subdivisions[countryIso]&&subdivisions[countryIso][sub]) return subdivisions[countryIso][sub].tax||0; if(countryTaxRates[countryIso]) return countryTaxRates[countryIso]; return DEFAULT_COUNTRY_TAX;}
-function renderCart(el){
-  const target=(typeof el==='string')?document.getElementById(el):el;
-  target.innerHTML='';
-  if(!cart||cart.length===0){target.innerHTML="<p>Your cart is empty.</p>"; return;}
-  cart.forEach(item=>{
+   Render cart
+------------------------- */
+async function renderCart(){
+  cartList.innerHTML='';
+  if(!cart || cart.length===0){ cartList.innerHTML="<p>Your cart is empty.</p>"; return; }
+  cart.forEach((item,index)=>{
     const div=document.createElement('div'); div.className='cart-item';
-    const name=document.createElement('div'); name.textContent=`${item.name} x ${item.qty}`;
-    const price=document.createElement('div'); price.textContent=`$${(item.price*item.qty).toFixed(2)} CAD`;
-    div.appendChild(name); div.appendChild(price); target.appendChild(div);
+    div.innerHTML=`<div>${item.name} x ${item.qty}</div><div>$${(item.price*item.qty).toFixed(2)} CAD</div>
+      <button onclick="removeItem(${index})">Remove</button>`;
+    cartList.appendChild(div);
   });
-  const subtotal=calcSubtotal(), shipping=calcShipping(), taxRate=getSelectedTaxRate(), tax=subtotal*taxRate, total=subtotal+shipping+tax;
-  const lines=[{label:'Subtotal',value:subtotal},{label:`Shipping (${totalQuantity()}×$${SHIPPING_PER_ITEM.toFixed(2)})`,value:shipping},{label:`Tax (${(taxRate*100).toFixed(2)}%)`,value:tax}];
-  lines.forEach(l=>{ const ln=document.createElement('div'); ln.className='summary-line'; ln.innerHTML=`<div class="small">${l.label}</div><div class="small">$${l.value.toFixed(2)} CAD</div>`; target.appendChild(ln); });
-  const totalDiv=document.createElement('div'); totalDiv.className='summary-total'; totalDiv.innerHTML=`<div class="summary-line"><div>Total</div><div>$${total.toFixed(2)} CAD</div></div>`;
-  target.appendChild(totalDiv);
+
+  const subtotal = calcSubtotal();
+  const shipping = await fetchCanadaPostRate('N0B1M0'); // Example: destination postal
+  const tax = subtotal*0.13; // example 13% tax
+  const total = subtotal+shipping+tax;
+
+  cartSummaryEl.innerHTML=`<div>Subtotal: $${subtotal.toFixed(2)} CAD</div>
+    <div>Shipping: $${shipping.toFixed(2)} CAD</div>
+    <div>Tax: $${tax.toFixed(2)} CAD</div>
+    <div><strong>Total: $${total.toFixed(2)} CAD</strong></div>`;
 }
-renderCart(cartSummaryEl);
-renderCart(cartSummary2El);
 
 /* -------------------------
    Event listeners
-   ------------------------- */
-countryEl.addEventListener('change', ()=>{ populateSubdivisions(countryEl.value); renderCart(cartSummaryEl); });
-subdivisionEl.addEventListener('change', ()=>{ renderCart(cartSummaryEl); renderCart(cartSummary2El); });
-
-document.getElementById('checkout-form').addEventListener('submit', e=>{
-  e.preventDefault();
-  // Show payment step
-  document.getElementById('step1').style.display='none';
-  document.getElementById('step2').style.display='block';
-  renderCart(cartSummary2El);
-  renderPaypalButton();
+------------------------- */
+document.querySelectorAll('.buy-button').forEach(btn=>{
+  btn.addEventListener('click',()=>{ 
+    const prod=btn.closest('.product');
+    addToCart({name:prod.dataset.name, price:parseFloat(prod.dataset.price), img:prod.dataset.img});
+    toggleCart(true);
+  });
 });
 
-document.getElementById('back-btn').addEventListener('click', ()=>{
-  document.getElementById('step1').style.display='block';
-  document.getElementById('step2').style.display='none';
-});
+cartIcon.addEventListener('click',()=>toggleCart(true));
+backBtn.addEventListener('click',()=>toggleCart(false));
 
-/* -------------------------
-   PayPal
-   ------------------------- */
-function renderPaypalButton(){
-  if(document.getElementById('paypal-button-container').children.length>0) return;
-  paypal.Buttons({
-    createOrder: function(data, actions) {
-      const total = calcSubtotal()+calcShipping()+(calcSubtotal()*getSelectedTaxRate());
-      return actions.order.create({ purchase_units:[{ amount:{ value: total.toFixed(2) } }] });
-    },
-    onApprove: function(data, actions) {
-      return actions.order.capture().then(function(details) {
-        alert('Transaction completed by '+details.payer.name.given_name);
-        cart=[]; localStorage.setItem('cart',JSON.stringify(cart));
-        window.location.href='/thankyou.html';
-      });
-    }
-  }).render('#paypal-button-container');
-}
-
-/* -------------------------
-   Populate subdivisions initially
-   ------------------------- */
-populateSubdivisions(countryEl.value);
+proceedBtn.addEventListener('click',()=>{ window.location.href='checkout.html'; });
