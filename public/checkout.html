@@ -14,18 +14,17 @@ const API_PASS = '0c44766df20c50f62771a9';
 
 app.post('/api/canadapost-rate', async (req, res) => {
   try {
-    const { weight, length, width, height, postalCode } = req.body;
+    const { postalCode } = req.body;
 
-    // Build XML request
     const xmlRequest = `
       <mailing-scenario xmlns="http://www.canadapost.ca/ws/ship/rate-v4">
         <customer-number>${CUSTOMER_NUMBER}</customer-number>
         <parcel-characteristics>
-          <weight>${weight}</weight>
+          <weight>0.015</weight>
           <dimensions>
-            <length>${length}</length>
-            <width>${width}</width>
-            <height>${height}</height>
+            <length>15</length>
+            <width>5</width>
+            <height>10</height>
           </dimensions>
         </parcel-characteristics>
         <origin-postal-code>N0B1M0</origin-postal-code>
@@ -43,28 +42,28 @@ app.post('/api/canadapost-rate', async (req, res) => {
       headers: {
         'Content-Type': 'application/vnd.cpc.ship.rate-v4+xml',
         Accept: 'application/vnd.cpc.ship.rate-v4+xml',
-        Authorization: 'Basic ' + Buffer.from(`${API_USER}:${API_PASS}`).toString('base64')
+        Authorization: 'Basic ' + Buffer.from(`${API_USER}:${API_PASS}`).toString('base64'),
       },
     });
 
     const xml = await response.text();
 
-    // Convert XML → JSON
     const parser = new xml2js.Parser({ explicitArray: false });
     const result = await parser.parseStringPromise(xml);
 
-    // Extract price quotes
-    const quotes = result['price-quotes']['price-quote'];
+    const quotesRaw = result['price-quotes']['price-quote'];
+    const quotes = Array.isArray(quotesRaw) ? quotesRaw : [quotesRaw];
+
     const shippingRates = quotes.map(q => ({
       service: q['service-name'],
       due: parseFloat(q['price-details']['due']),
-      expectedDelivery: q['service-standard']['expected-delivery-date']
+      expectedDelivery: q['service-standard']['expected-delivery-date'],
     }));
 
     res.json({ success: true, shippingRates });
 
   } catch (err) {
-    console.error(err);
+    console.error('Canada Post API error:', err);
     res.status(500).json({ success: false, error: 'Failed to get rates' });
   }
 });
