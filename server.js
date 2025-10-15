@@ -1,6 +1,31 @@
+import express from 'express';
+import bodyParser from 'body-parser';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import fetch from 'node-fetch'; // make sure you have node-fetch installed
+
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+// Resolve __dirname in ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Middleware
+app.use(bodyParser.json());
+app.use(express.static(path.join(__dirname, 'public')));
+
+// --- Canada Post API credentials ---
+const CANADAPOST_USERNAME = '399dd571f6bd9717';
+const CANADAPOST_PASSWORD = '0c44766df20c50f62771a9';
+const CANADAPOST_URL = 'https://ct.soa-gw.canadapost.ca/rs/ship/price';
+
+// --- Canada Post Rate API ---
 app.post('/api/canadapost-rate', async (req, res) => {
   const { postal, country, weight, length, width, height } = req.body;
+
   if (!postal || !weight || !length || !width || !height) {
+    console.log("Missing fields in request:", req.body);
     return res.status(400).json({ error: 'Missing fields' });
   }
 
@@ -25,8 +50,7 @@ app.post('/api/canadapost-rate', async (req, res) => {
 </mailing-scenario>
 `;
 
-    console.log('Sending XML to Canada Post:');
-    console.log(xml);
+    console.log("Sending to Canada Post API:", xml);
 
     const response = await fetch(CANADAPOST_URL, {
       method: 'POST',
@@ -39,8 +63,7 @@ app.post('/api/canadapost-rate', async (req, res) => {
     });
 
     const xmlText = await response.text();
-    console.log('Canada Post raw response:');
-    console.log(xmlText);
+    console.log("Canada Post API response:", xmlText);
 
     if (!response.ok) {
       return res.status(500).json({ error: 'Canada Post API error', details: xmlText });
@@ -53,11 +76,26 @@ app.post('/api/canadapost-rate', async (req, res) => {
       rates.push({ name: match[1], price: parseFloat(match[2]) });
     }
 
-    console.log('Parsed rates:', rates);
     res.json(rates);
 
   } catch (err) {
-    console.error('Server error:', err);
+    console.error("Server error:", err);
     res.status(500).json({ error: 'Server error', details: err.message });
   }
 });
+
+// --- Routes ---
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+app.get('/checkout', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'checkout.html'));
+});
+
+app.get('/thankyou', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'thankyou.html'));
+});
+
+// Start server
+app.listen(PORT, () => console.log(`N0B1M0 server running on port ${PORT}`));
