@@ -87,4 +87,53 @@ function renderCart(el){
   const subtotal=calcSubtotal(), shipping=calcShipping(), taxRate=getSelectedTaxRate(), tax=subtotal*taxRate, total=subtotal+shipping+tax;
   const lines=[{label:'Subtotal',value:subtotal},{label:`Shipping (${totalQuantity()}×$${SHIPPING_PER_ITEM.toFixed(2)})`,value:shipping},{label:`Tax (${(taxRate*100).toFixed(2)}%)`,value:tax}];
   lines.forEach(l=>{ const ln=document.createElement('div'); ln.className='summary-line'; ln.innerHTML=`<div class="small">${l.label}</div><div class="small">$${l.value.toFixed(2)} CAD</div>`; target.appendChild(ln); });
-  const totalDiv=document.createElement('div'); totalDiv.className='summary-total'; totalDiv.innerHTML=`<div class="summary-line"><div>Total</div
+  const totalDiv=document.createElement('div'); totalDiv.className='summary-total'; totalDiv.innerHTML=`<div class="summary-line"><div>Total</div><div>$${total.toFixed(2)} CAD</div></div>`;
+  target.appendChild(totalDiv);
+}
+renderCart(cartSummaryEl);
+renderCart(cartSummary2El);
+
+/* -------------------------
+   Event listeners
+   ------------------------- */
+countryEl.addEventListener('change', ()=>{ populateSubdivisions(countryEl.value); renderCart(cartSummaryEl); });
+subdivisionEl.addEventListener('change', ()=>{ renderCart(cartSummaryEl); renderCart(cartSummary2El); });
+
+document.getElementById('checkout-form').addEventListener('submit', e=>{
+  e.preventDefault();
+  // Show payment step
+  document.getElementById('step1').style.display='none';
+  document.getElementById('step2').style.display='block';
+  renderCart(cartSummary2El);
+  renderPaypalButton();
+});
+
+document.getElementById('back-btn').addEventListener('click', ()=>{
+  document.getElementById('step1').style.display='block';
+  document.getElementById('step2').style.display='none';
+});
+
+/* -------------------------
+   PayPal
+   ------------------------- */
+function renderPaypalButton(){
+  if(document.getElementById('paypal-button-container').children.length>0) return;
+  paypal.Buttons({
+    createOrder: function(data, actions) {
+      const total = calcSubtotal()+calcShipping()+(calcSubtotal()*getSelectedTaxRate());
+      return actions.order.create({ purchase_units:[{ amount:{ value: total.toFixed(2) } }] });
+    },
+    onApprove: function(data, actions) {
+      return actions.order.capture().then(function(details) {
+        alert('Transaction completed by '+details.payer.name.given_name);
+        cart=[]; localStorage.setItem('cart',JSON.stringify(cart));
+        window.location.href='/thankyou.html';
+      });
+    }
+  }).render('#paypal-button-container');
+}
+
+/* -------------------------
+   Populate subdivisions initially
+   ------------------------- */
+populateSubdivisions(countryEl.value);
