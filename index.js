@@ -18,6 +18,14 @@ app.post('/get-shipping', async (req, res) => {
   // return shipping cost
   res.json({ cost: 5.99 });
 });
+const express = require('express');
+const path = require('path');
+const cors = require('cors');
+const app = express();
 
+app.use(cors());
+app.use(express.static(path.join(__dirname, 'public')));
+
+});
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
