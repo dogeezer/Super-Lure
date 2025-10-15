@@ -11,6 +11,24 @@
 <ul>
   <li>N0B1M0 Lure - $7.60 - 15g - 15x5x10cm</li>
 </ul>
-<a href="/checkout"><button>Go to Checkout</button></a>
+<a href="/checkout"><button id="checkout-btn">Go to Checkout</button></a>
+
+<script>
+// Pre-fill cart when user clicks checkout
+document.getElementById('checkout-btn').addEventListener('click', () => {
+  localStorage.setItem('cart', JSON.stringify([
+    { 
+      name: "Super Lure X1", 
+      qty: 1, 
+      price: 7.60, 
+      weight: 0.015, // kg
+      length: 15,    // cm
+      width: 5,
+      height: 10
+    }
+  ]));
+});
+</script>
+
 </body>
 </html>
