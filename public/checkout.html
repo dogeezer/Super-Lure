@@ -4,110 +4,103 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>N0B1M0 Checkout</title>
-<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
 <style>
-body { font-family:'Roboto', sans-serif; margin:0; padding:0; background:#f5f5f5; color:#333; }
-header { background:#000; color:white; padding:20px; text-align:center; }
+body { font-family:sans-serif; background:#f5f5f5; color:#333; margin:0; padding:0; }
+header { background:#000; color:#fff; padding:20px; text-align:center; }
 .content { padding:30px; max-width:800px; margin:20px auto; background:white; border-radius:10px; }
 .cart-summary, .shipping-options { margin-bottom:20px; }
 .cart-item { display:flex; justify-content:space-between; margin-bottom:10px; }
-label { display:block; margin-top:10px; font-weight:bold; }
 input, select, button { width:100%; padding:8px; margin-top:6px; border-radius:6px; border:1px solid #ccc; box-sizing:border-box; }
-button { background:#3B5998; color:white; border:none; cursor:pointer; font-weight:bold; }
+button { background:#3B5998; color:white; border:none; cursor:pointer; }
 button:hover { background:#2b4f7a; }
-.summary-line { display:flex; justify-content:space-between; padding:4px 0; }
-.summary-total { font-weight:700; font-size:1.05rem; margin-top:8px; }
+.summary-line { display:flex; justify-content:space-between; }
+.summary-total { font-weight:bold; margin-top:8px; }
 </style>
 </head>
 <body>
-
-<header>
-  <h1>N0B1M0 Checkout</h1>
-</header>
+<header><h1>N0B1M0 Checkout</h1></header>
 
 <section class="content">
+<h2>Order Summary</h2>
+<div class="cart-summary" id="cart-summary"></div>
 
-  <h2>Order Summary</h2>
-  <div class="cart-summary" id="cart-summary"></div>
+<h2>Shipping Info</h2>
+<form id="checkout-form">
+<label>Postal Code *</label>
+<input type="text" id="postal" required placeholder="e.g., M5V1K2">
 
-  <h2>Shipping Info</h2>
-  <form id="checkout-form">
-    <label>Postal Code <span style="color:red">*</span></label>
-    <input type="text" id="postal" required placeholder="e.g., M5V1K2">
+<div class="shipping-options">
+<label>Select Shipping</label>
+<select id="shipping-select" required>
+<option value="">-- Enter postal code first --</option>
+</select>
+</div>
 
-    <div class="shipping-options">
-      <label>Select Shipping</label>
-      <select id="shipping-select" required>
-        <option value="">-- Enter postal code first --</option>
-      </select>
-    </div>
+<label>Full Name *</label>
+<input type="text" id="name" required>
+<label>Email *</label>
+<input type="email" id="email" required>
 
-    <label>Full Name <span style="color:red">*</span></label>
-    <input type="text" id="name" required>
+<div style="margin-top:20px;">
+<div class="summary-line"><div>Subtotal</div><div id="subtotal">$0.00</div></div>
+<div class="summary-line"><div>Shipping</div><div id="shipping-cost">$0.00</div></div>
+<div class="summary-total"><div>Total</div><div id="total">$0.00</div></div>
+</div>
 
-    <label>Email <span style="color:red">*</span></label>
-    <input type="email" id="email" required>
+<button type="submit" style="margin-top:20px;">Proceed to Payment</button>
+</form>
 
-    <div style="margin-top:20px;">
-      <div class="summary-line"><div>Subtotal</div><div id="subtotal">$0.00</div></div>
-      <div class="summary-line"><div>Shipping</div><div id="shipping-cost">$0.00</div></div>
-      <div class="summary-total"><div>Total</div><div id="total">$0.00</div></div>
-    </div>
-
-    <button type="submit" style="margin-top:20px;">Proceed to Payment</button>
-  </form>
-
-  <div id="paypal-button-container" style="margin-top:20px;"></div>
+<div id="paypal-button-container" style="margin-top:20px;"></div>
 </section>
 
 <script>
-// --- Grab cart from localStorage ---
-const cart = JSON.parse(localStorage.getItem('cart')) || [];
+const cart = [{
+  name: 'N0B1M0 Lure',
+  price: 7.60,
+  qty: 1,
+  weight: 0.015, // kg
+  length: 15,
+  width: 5,
+  height: 10
+}];
 
-// --- Render cart dynamically ---
 function renderCart() {
   const el = document.getElementById('cart-summary');
   el.innerHTML = '';
   let subtotal = 0;
-
   cart.forEach(item=>{
     const div = document.createElement('div');
-    div.className = 'cart-item';
-    div.innerHTML = `<div>${item.name} x ${item.qty}</div><div>$${(item.price*item.qty).toFixed(2)}</div>`;
+    div.className='cart-item';
+    div.innerHTML=`<div>${item.name} x ${item.qty}</div><div>$${(item.price*item.qty).toFixed(2)}</div>`;
     el.appendChild(div);
     subtotal += item.price*item.qty;
   });
-
-  document.getElementById('subtotal').textContent = `$${subtotal.toFixed(2)}`;
+  document.getElementById('subtotal').textContent=`$${subtotal.toFixed(2)}`;
   updateTotal();
 }
 
-// --- Update totals ---
-function updateTotal() {
-  const subtotal = parseFloat(document.getElementById('subtotal').textContent.replace('$','')) || 0;
-  const shipping = parseFloat(document.getElementById('shipping-cost').textContent.replace('$','')) || 0;
-  document.getElementById('total').textContent = `$${(subtotal+shipping).toFixed(2)}`;
+function updateTotal(){
+  const subtotal=parseFloat(document.getElementById('subtotal').textContent.replace('$',''))||0;
+  const shipping=parseFloat(document.getElementById('shipping-cost').textContent.replace('$',''))||0;
+  document.getElementById('total').textContent=`$${(subtotal+shipping).toFixed(2)}`;
 }
 
 renderCart();
 
-// --- Fetch Canada Post rates ---
-const postalInput = document.getElementById('postal');
-const shippingSelect = document.getElementById('shipping-select');
+const postalInput=document.getElementById('postal');
+const shippingSelect=document.getElementById('shipping-select');
 
 postalInput.addEventListener('change', async ()=>{
-  const postal = postalInput.value.trim().toUpperCase();
+  const postal=postalInput.value.trim().toUpperCase();
   if(!postal) return;
+  shippingSelect.innerHTML='<option>Loading...</option>';
 
-  shippingSelect.innerHTML = '<option>Loading...</option>';
-
-  try {
-    const res = await fetch('/api/canadapost-rate', {
+  try{
+    const res=await fetch('/api/canadapost-rate',{
       method:'POST',
-      headers:{ 'Content-Type':'application/json' },
+      headers:{'Content-Type':'application/json'},
       body: JSON.stringify({
         postal,
-        country:'CA',
         weight: cart.reduce((w,i)=>w+i.weight*i.qty,0),
         length: cart.reduce((l,i)=>Math.max(l,i.length),0),
         width: cart.reduce((w,i)=>Math.max(w,i.width),0),
@@ -115,62 +108,58 @@ postalInput.addEventListener('change', async ()=>{
       })
     });
 
-    const rates = await res.json();
-    if(!Array.isArray(rates) || rates.length===0){
-      shippingSelect.innerHTML = '<option value="">No rates available</option>';
-      document.getElementById('shipping-cost').textContent = '$0.00';
+    const rates=await res.json();
+    if(!Array.isArray(rates)||rates.length===0){
+      shippingSelect.innerHTML='<option value="">No rates available</option>';
+      document.getElementById('shipping-cost').textContent='$0.00';
       updateTotal();
       return;
     }
 
-    shippingSelect.innerHTML = '<option value="">-- Select Shipping --</option>';
+    shippingSelect.innerHTML='<option value="">-- Select Shipping --</option>';
     rates.forEach(r=>{
-      const opt = document.createElement('option');
-      opt.value = r.price;
-      opt.textContent = `${r.name} - $${r.price.toFixed(2)}`;
+      const opt=document.createElement('option');
+      opt.value=r.price;
+      opt.textContent=`${r.name} - $${r.price.toFixed(2)}`;
       shippingSelect.appendChild(opt);
     });
 
-  } catch(err){
+  }catch(err){
     console.error(err);
-    shippingSelect.innerHTML = '<option value="">Error fetching rates</option>';
+    shippingSelect.innerHTML='<option value="">Error fetching rates</option>';
   }
 });
 
-// --- Update totals on shipping selection ---
 shippingSelect.addEventListener('change', ()=>{
-  const price = parseFloat(shippingSelect.value) || 0;
-  document.getElementById('shipping-cost').textContent = `$${price.toFixed(2)}`;
+  const price=parseFloat(shippingSelect.value)||0;
+  document.getElementById('shipping-cost').textContent=`$${price.toFixed(2)}`;
   updateTotal();
 });
 
-// --- PayPal ---
+// PayPal
 const PAYPAL_CLIENT_ID = "AZPob5p8BVkFnCvv698dRuJvNJyNz27PZlwD86gO6LzqZJvbbrx4a2MuLqH1IfXsvNdBKgOgDDcTLXQk";
-const loadPaypal = () => {
-  const script = document.createElement('script');
-  script.src = `https://www.paypal.com/sdk/js?client-id=${PAYPAL_CLIENT_ID}&currency=CAD`;
-  script.onload = () => renderPaypal();
+
+const loadPaypal=()=>{
+  const script=document.createElement('script');
+  script.src=`https://www.paypal.com/sdk/js?client-id=${PAYPAL_CLIENT_ID}&currency=CAD`;
+  script.onload=()=>renderPaypal();
   document.head.appendChild(script);
 };
 
-const renderPaypal = ()=>{
+const renderPaypal=()=>{
   paypal.Buttons({
-    createOrder: (data, actions)=>{
-      const total = parseFloat(document.getElementById('total').textContent.replace('$','')).toFixed(2);
-      return actions.order.create({
-        purchase_units:[{ amount:{ currency_code:'CAD', value: total } }]
-      });
+    createOrder:(data,actions)=>{
+      const total=parseFloat(document.getElementById('total').textContent.replace('$','')).toFixed(2);
+      return actions.order.create({purchase_units:[{amount:{currency_code:'CAD',value:total}}]});
     },
-    onApprove: (data, actions)=> actions.order.capture().then(details=>{
+    onApprove:(data,actions)=>actions.order.capture().then(details=>{
       alert(`Payment completed by ${details.payer.name.given_name}`);
-      localStorage.removeItem('cart');
-      window.location.href = "/thankyou.html";
+      window.location.href='/thankyou';
     })
   }).render('#paypal-button-container');
 };
 
 loadPaypal();
 </script>
-
 </body>
 </html>
