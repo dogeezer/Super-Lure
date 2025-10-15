@@ -1,70 +1,74 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Super Lure Checkout</title>
-<style>
-  body { font-family: Arial, sans-serif; padding: 20px; }
-  input, button { padding: 8px; margin: 5px 0; width: 200px; }
-  .rates { margin-top: 20px; }
-  .rate-item { margin-bottom: 10px; }
-</style>
-</head>
-<body>
+const express = require('express');
+const bodyParser = require('body-parser');
+const fetch = require('node-fetch');
+const xml2js = require('xml2js');
 
-<h2>Checkout</h2>
+const app = express();
+app.use(bodyParser.json());
 
-<label for="postalCode">Enter your postal code:</label><br>
-<input type="text" id="postalCode" placeholder="e.g. M5V1K2">
-<button id="getRatesBtn">Get Shipping Rates</button>
+// Canada Post API info
+const CANADA_POST_API = 'https://soa-gw.canadapost.ca/rs/ship/rate-v4';
+const CUSTOMER_NUMBER = '0001223271';
+const API_USER = '399dd571f6bd9717';
+const API_PASS = '0c44766df20c50f62771a9';
 
-<div class="rates" id="rates"></div>
-
-<script>
-document.getElementById('getRatesBtn').addEventListener('click', async () => {
-  const postalCode = document.getElementById('postalCode').value.trim();
-  if (!postalCode) {
-    alert('Please enter your postal code!');
-    return;
-  }
-
-  const ratesContainer = document.getElementById('rates');
-  ratesContainer.innerHTML = 'Loading...';
-
+app.post('/api/canadapost-rate', async (req, res) => {
   try {
-    const response = await fetch('/api/canadapost-rate', {
+    const { weight, length, width, height, postalCode } = req.body;
+
+    // Build XML request
+    const xmlRequest = `
+      <mailing-scenario xmlns="http://www.canadapost.ca/ws/ship/rate-v4">
+        <customer-number>${CUSTOMER_NUMBER}</customer-number>
+        <parcel-characteristics>
+          <weight>${weight}</weight>
+          <dimensions>
+            <length>${length}</length>
+            <width>${width}</width>
+            <height>${height}</height>
+          </dimensions>
+        </parcel-characteristics>
+        <origin-postal-code>N0B1M0</origin-postal-code>
+        <destination>
+          <domestic>
+            <postal-code>${postalCode}</postal-code>
+          </domestic>
+        </destination>
+      </mailing-scenario>
+    `;
+
+    const response = await fetch(CANADA_POST_API, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        postalCode,
-        weight: 0.015,  // 15g
-        length: 15,     // cm
-        width: 5,       // cm
-        height: 10      // cm
-      })
+      body: xmlRequest,
+      headers: {
+        'Content-Type': 'application/vnd.cpc.ship.rate-v4+xml',
+        Accept: 'application/vnd.cpc.ship.rate-v4+xml',
+        Authorization: 'Basic ' + Buffer.from(`${API_USER}:${API_PASS}`).toString('base64')
+      },
     });
 
-    const data = await response.json();
-    if (!data.success) throw new Error(data.error);
+    const xml = await response.text();
 
-    ratesContainer.innerHTML = '';
-    data.shippingRates.forEach(rate => {
-      const div = document.createElement('div');
-      div.className = 'rate-item';
-      div.innerHTML = `
-        <strong>${rate.service}</strong>: $${rate.due.toFixed(2)}<br>
-        Expected delivery: ${rate.expectedDelivery}
-      `;
-      ratesContainer.appendChild(div);
-    });
+    // Convert XML → JSON
+    const parser = new xml2js.Parser({ explicitArray: false });
+    const result = await parser.parseStringPromise(xml);
+
+    // Extract price quotes
+    const quotes = result['price-quotes']['price-quote'];
+    const shippingRates = quotes.map(q => ({
+      service: q['service-name'],
+      due: parseFloat(q['price-details']['due']),
+      expectedDelivery: q['service-standard']['expected-delivery-date']
+    }));
+
+    res.json({ success: true, shippingRates });
 
   } catch (err) {
-    ratesContainer.innerHTML = 'Failed to get shipping rates. Try again.';
     console.error(err);
+    res.status(500).json({ success: false, error: 'Failed to get rates' });
   }
 });
-</script>
 
-</body>
-</html>
+app.listen(10000, () => {
+  console.log('N0B1M0 server running on port 10000');
+});
