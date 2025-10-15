@@ -3,95 +3,174 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Super Lure Checkout</title>
+<title>N0B1M0 Checkout</title>
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
 <style>
-  body { font-family:'Roboto', sans-serif; margin:0; padding:0; background:#f5f5f5; color:#333; }
-  header { background:#000; color:white; padding:20px; text-align:center; }
-  h1,h2 { text-align:center; }
-  .content { padding:30px; max-width:1000px; margin:20px auto; background:white; border-radius:10px; box-shadow:0 4px 12px rgba(0,0,0,0.08); }
-  .cart-summary { margin-bottom:20px; }
-  .cart-item { display:flex; justify-content:space-between; margin-bottom:10px; }
-  form label { display:block; margin-top:10px; font-weight:bold; }
-  form input, form textarea, form select { width:100%; padding:8px; margin-top:6px; border-radius:6px; border:1px solid #ccc; box-sizing:border-box; }
-  form textarea { resize:vertical; min-height:80px; }
-  button { padding:10px 18px; background:#3B5998; color:white; border:none; border-radius:6px; font-weight:bold; cursor:pointer; }
-  button:hover { background:#2b4f7a; }
-  .required-star { color:red; }
-  .button-container { display:flex; justify-content:center; gap:18px; margin-top:20px; flex-wrap:wrap; }
-  .phone-container { display:flex; gap:8px; align-items:center; }
-  select.country-code { width:30%; min-width:140px; font-size:13px; }
-  #paypal-button-container { margin-top:20px; }
-  #back-btn { background:#777; margin-top:15px; padding:8px 14px; font-size:14px; cursor:pointer; border-radius:6px; color:white; border:none; }
-  .two-col { display:grid; grid-template-columns: 1fr 1fr; gap:12px; align-items:start; }
-  .summary-line { display:flex; justify-content:space-between; padding:4px 0; }
-  .summary-total { font-weight:700; font-size:1.05rem; margin-top:8px; }
-  .small { font-size:0.9rem; color:#555; }
+body { font-family:'Roboto', sans-serif; margin:0; padding:0; background:#f5f5f5; color:#333; }
+header { background:#000; color:white; padding:20px; text-align:center; }
+.content { padding:30px; max-width:800px; margin:20px auto; background:white; border-radius:10px; }
+.cart-summary, .shipping-options { margin-bottom:20px; }
+.cart-item { display:flex; justify-content:space-between; margin-bottom:10px; }
+label { display:block; margin-top:10px; font-weight:bold; }
+input, select, button { width:100%; padding:8px; margin-top:6px; border-radius:6px; border:1px solid #ccc; box-sizing:border-box; }
+button { background:#3B5998; color:white; border:none; cursor:pointer; font-weight:bold; }
+button:hover { background:#2b4f7a; }
+.summary-line { display:flex; justify-content:space-between; padding:4px 0; }
+.summary-total { font-weight:700; font-size:1.05rem; margin-top:8px; }
 </style>
 </head>
 <body>
 
 <header>
-  <h1>Super Lure Checkout</h1>
+  <h1>N0B1M0 Checkout</h1>
 </header>
 
 <section class="content">
 
-  <div id="step1">
-    <h2>Order Summary</h2>
-    <div class="cart-summary" id="cart-summary"></div>
+  <h2>Order Summary</h2>
+  <div class="cart-summary" id="cart-summary"></div>
 
-    <h2>Shipping & Billing Info</h2>
+  <h2>Shipping Info</h2>
+  <form id="checkout-form">
+    <label>Postal Code <span style="color:red">*</span></label>
+    <input type="text" id="postal" required placeholder="e.g., M5V1K2">
 
-    <form id="checkout-form" novalidate>
-      <label>Full Name <span class="required-star">*</span></label>
-      <input type="text" id="name" required>
+    <div class="shipping-options">
+      <label>Select Shipping</label>
+      <select id="shipping-select" required>
+        <option value="">-- Enter postal code first --</option>
+      </select>
+    </div>
 
-      <label>Email <span class="required-star">*</span></label>
-      <input type="email" id="email" required pattern=".+\.com$" title="Email must end with .com">
+    <label>Full Name <span style="color:red">*</span></label>
+    <input type="text" id="name" required>
 
-      <div class="two-col" style="margin-top:10px;">
-        <div>
-          <label>Country <span class="required-star">*</span></label>
-          <select id="country" required></select>
-        </div>
-        <div>
-          <label>State / Province <span class="required-star">*</span></label>
-          <select id="subdivision" required>
-            <option value="">-- Select country first --</option>
-          </select>
-        </div>
-      </div>
+    <label>Email <span style="color:red">*</span></label>
+    <input type="email" id="email" required>
 
-      <label style="margin-top:12px;">Address <span class="required-star">*</span></label>
-      <input type="text" id="address" required>
+    <div style="margin-top:20px;">
+      <div class="summary-line"><div>Subtotal</div><div id="subtotal">$0.00</div></div>
+      <div class="summary-line"><div>Shipping</div><div id="shipping-cost">$0.00</div></div>
+      <div class="summary-total"><div>Total</div><div id="total">$0.00</div></div>
+    </div>
 
-      <label>Phone <span class="required-star">*</span></label>
-      <div class="phone-container">
-        <select name="country_code" id="country_code" class="country-code" required></select>
-        <input type="tel" id="phone" placeholder="Phone number" required style="flex:1;"/>
-      </div>
+    <button type="submit" style="margin-top:20px;">Proceed to Payment</button>
+  </form>
 
-      <label>Additional Info</label>
-      <textarea id="additional" placeholder="Optional notes..."></textarea>
-
-      <div class="button-container">
-        <button type="button" id="exit-btn" style="background:#777;">Exit Checkout</button>
-        <button type="submit" id="to-payment">Continue to Payment</button>
-      </div>
-    </form>
-  </div>
-
-  <div id="step2" style="display:none;">
-    <h2>Order Summary</h2>
-    <div class="cart-summary" id="cart-summary-2"></div>
-    <div id="paypal-button-container"></div>
-    <button id="back-btn">← Back to Info</button>
-  </div>
-
+  <div id="paypal-button-container" style="margin-top:20px;"></div>
 </section>
 
-<script src="https://www.paypal.com/sdk/js?client-id=AQJHxYufbd8KOGyloXOLO-__0P6K3FqQbwWgc1N3x7pGQNeRwYZtS2NRWinFZ-zOquqRQURSYYXWR1Nb&currency=CAD"></script>
-<script src="script.js"></script>
+<script>
+// --- Grab cart from localStorage ---
+const cart = JSON.parse(localStorage.getItem('cart')) || [];
+
+// --- Render cart dynamically ---
+function renderCart() {
+  const el = document.getElementById('cart-summary');
+  el.innerHTML = '';
+  let subtotal = 0;
+
+  cart.forEach(item=>{
+    const div = document.createElement('div');
+    div.className = 'cart-item';
+    div.innerHTML = `<div>${item.name} x ${item.qty}</div><div>$${(item.price*item.qty).toFixed(2)}</div>`;
+    el.appendChild(div);
+    subtotal += item.price*item.qty;
+  });
+
+  document.getElementById('subtotal').textContent = `$${subtotal.toFixed(2)}`;
+  updateTotal();
+}
+
+// --- Update totals ---
+function updateTotal() {
+  const subtotal = parseFloat(document.getElementById('subtotal').textContent.replace('$','')) || 0;
+  const shipping = parseFloat(document.getElementById('shipping-cost').textContent.replace('$','')) || 0;
+  document.getElementById('total').textContent = `$${(subtotal+shipping).toFixed(2)}`;
+}
+
+renderCart();
+
+// --- Fetch Canada Post rates ---
+const postalInput = document.getElementById('postal');
+const shippingSelect = document.getElementById('shipping-select');
+
+postalInput.addEventListener('change', async ()=>{
+  const postal = postalInput.value.trim().toUpperCase();
+  if(!postal) return;
+
+  shippingSelect.innerHTML = '<option>Loading...</option>';
+
+  try {
+    const res = await fetch('/api/canadapost-rate', {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json' },
+      body: JSON.stringify({
+        postal,
+        country:'CA',
+        weight: cart.reduce((w,i)=>w+i.weight*i.qty,0),
+        length: cart.reduce((l,i)=>Math.max(l,i.length),0),
+        width: cart.reduce((w,i)=>Math.max(w,i.width),0),
+        height: cart.reduce((h,i)=>h+i.height,0)
+      })
+    });
+
+    const rates = await res.json();
+    if(!Array.isArray(rates) || rates.length===0){
+      shippingSelect.innerHTML = '<option value="">No rates available</option>';
+      document.getElementById('shipping-cost').textContent = '$0.00';
+      updateTotal();
+      return;
+    }
+
+    shippingSelect.innerHTML = '<option value="">-- Select Shipping --</option>';
+    rates.forEach(r=>{
+      const opt = document.createElement('option');
+      opt.value = r.price;
+      opt.textContent = `${r.name} - $${r.price.toFixed(2)}`;
+      shippingSelect.appendChild(opt);
+    });
+
+  } catch(err){
+    console.error(err);
+    shippingSelect.innerHTML = '<option value="">Error fetching rates</option>';
+  }
+});
+
+// --- Update totals on shipping selection ---
+shippingSelect.addEventListener('change', ()=>{
+  const price = parseFloat(shippingSelect.value) || 0;
+  document.getElementById('shipping-cost').textContent = `$${price.toFixed(2)}`;
+  updateTotal();
+});
+
+// --- PayPal ---
+const PAYPAL_CLIENT_ID = "AZPob5p8BVkFnCvv698dRuJvNJyNz27PZlwD86gO6LzqZJvbbrx4a2MuLqH1IfXsvNdBKgOgDDcTLXQk";
+const loadPaypal = () => {
+  const script = document.createElement('script');
+  script.src = `https://www.paypal.com/sdk/js?client-id=${PAYPAL_CLIENT_ID}&currency=CAD`;
+  script.onload = () => renderPaypal();
+  document.head.appendChild(script);
+};
+
+const renderPaypal = ()=>{
+  paypal.Buttons({
+    createOrder: (data, actions)=>{
+      const total = parseFloat(document.getElementById('total').textContent.replace('$','')).toFixed(2);
+      return actions.order.create({
+        purchase_units:[{ amount:{ currency_code:'CAD', value: total } }]
+      });
+    },
+    onApprove: (data, actions)=> actions.order.capture().then(details=>{
+      alert(`Payment completed by ${details.payer.name.given_name}`);
+      localStorage.removeItem('cart');
+      window.location.href = "/thankyou.html";
+    })
+  }).render('#paypal-button-container');
+};
+
+loadPaypal();
+</script>
+
 </body>
 </html>
