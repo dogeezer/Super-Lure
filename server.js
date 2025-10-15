@@ -1,8 +1,7 @@
-// server.js (ES module)
+// server.js
 import express from 'express';
-import bodyParser from 'body-parser';
 import fetch from 'node-fetch';
-import { Parser } from 'xml2js';
+import xml2js from 'xml2js';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -10,8 +9,8 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-app.use(bodyParser.json());
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.json());
+app.use(express.static(path.join(__dirname, 'public'))); // serve static files (checkout page, JS, CSS)
 
 // Canada Post API info
 const CANADA_POST_API = 'https://soa-gw.canadapost.ca/rs/ship/rate-v4';
@@ -19,6 +18,12 @@ const CUSTOMER_NUMBER = '0001223271';
 const API_USER = '399dd571f6bd9717';
 const API_PASS = '0c44766df20c50f62771a9';
 
+// Route for checkout page
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// Canada Post API route
 app.post('/api/canadapost-rate', async (req, res) => {
   try {
     const { postalCode } = req.body;
@@ -54,7 +59,7 @@ app.post('/api/canadapost-rate', async (req, res) => {
     });
 
     const xml = await response.text();
-    const parser = new Parser({ explicitArray: false });
+    const parser = new xml2js.Parser({ explicitArray: false });
     const result = await parser.parseStringPromise(xml);
 
     const quotesRaw = result['price-quotes']['price-quote'];
@@ -73,6 +78,7 @@ app.post('/api/canadapost-rate', async (req, res) => {
   }
 });
 
-app.listen(10000, () => {
-  console.log('N0B1M0 server running on port 10000');
+const PORT = process.env.PORT || 10000;
+app.listen(PORT, () => {
+  console.log(`N0B1M0 server running on port ${PORT}`);
 });
