@@ -1,13 +1,16 @@
-const express = require('express');
-const bodyParser = require('body-parser');
-const fetch = require('node-fetch');
-const xml2js = require('xml2js');
-const path = require('path');
+// server.js (ES module)
+import express from 'express';
+import bodyParser from 'body-parser';
+import fetch from 'node-fetch';
+import { Parser } from 'xml2js';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 app.use(bodyParser.json());
-
-// Serve static files (HTML, JS, CSS)
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Canada Post API info
@@ -16,7 +19,6 @@ const CUSTOMER_NUMBER = '0001223271';
 const API_USER = '399dd571f6bd9717';
 const API_PASS = '0c44766df20c50f62771a9';
 
-// API endpoint
 app.post('/api/canadapost-rate', async (req, res) => {
   try {
     const { postalCode } = req.body;
@@ -52,7 +54,7 @@ app.post('/api/canadapost-rate', async (req, res) => {
     });
 
     const xml = await response.text();
-    const parser = new xml2js.Parser({ explicitArray: false });
+    const parser = new Parser({ explicitArray: false });
     const result = await parser.parseStringPromise(xml);
 
     const quotesRaw = result['price-quotes']['price-quote'];
@@ -65,16 +67,10 @@ app.post('/api/canadapost-rate', async (req, res) => {
     }));
 
     res.json({ success: true, shippingRates });
-
   } catch (err) {
     console.error('Canada Post API error:', err);
     res.status(500).json({ success: false, error: 'Failed to get rates' });
   }
-});
-
-// Serve checkout page
-app.get('/checkout', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'checkout.html'));
 });
 
 app.listen(10000, () => {
