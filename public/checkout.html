@@ -16,6 +16,7 @@ app.post('/api/canadapost-rate', async (req, res) => {
   try {
     const { postalCode } = req.body;
 
+    // ✅ Correct XML structure
     const xmlRequest = `
       <mailing-scenario xmlns="http://www.canadapost.ca/ws/ship/rate-v4">
         <customer-number>${CUSTOMER_NUMBER}</customer-number>
