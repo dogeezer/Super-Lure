@@ -1,19 +1,26 @@
 // server.js
-const express = require('express');
-const fetch = require('node-fetch'); // if using Node 18+, native fetch works
-const bodyParser = require('body-parser');
+import express from 'express';
+import bodyParser from 'body-parser';
+import fetch from 'node-fetch'; // If using Node 18+, you can use native fetch instead
+import path from 'path';
+import { fileURLToPath } from 'url';
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Resolve __dirname in ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 app.use(bodyParser.json());
-app.use(express.static('public')); // serve your HTML from /public
+app.use(express.static(path.join(__dirname, 'public')));
 
 // --- Replace with your Canada Post credentials ---
 const CANADAPOST_USERNAME = '399dd571f6bd9717';
 const CANADAPOST_PASSWORD = '0c44766df20c50f62771a9';
-const CANADAPOST_URL = 'https://ct.soa-gw.canadapost.ca/rs/ship/price'; // Production or test URL
+const CANADAPOST_URL = 'https://ct.soa-gw.canadapost.ca/rs/ship/price'; // Production or test
 
-// --- API endpoint for rates ---
+// --- Canada Post Rate API ---
 app.post('/api/canadapost-rate', async (req, res) => {
   const { postal, country, weight, length, width, height } = req.body;
 
@@ -22,7 +29,6 @@ app.post('/api/canadapost-rate', async (req, res) => {
   }
 
   try {
-    // Build Canada Post XML request
     const xml = `
 <mailing-scenario xmlns="http://www.canadapost.ca/ws/ship/rate-v4">
   <customer-number>0001223271</customer-number>
@@ -59,7 +65,7 @@ app.post('/api/canadapost-rate', async (req, res) => {
     }
 
     const xmlText = await response.text();
-    // Minimal XML parsing to JSON (simplified)
+    // Minimal parsing
     const rates = [];
     const regex = /<service-name>(.*?)<\/service-name>[\s\S]*?<price>(.*?)<\/price>/g;
     let match;
@@ -78,4 +84,5 @@ app.post('/api/canadapost-rate', async (req, res) => {
   }
 });
 
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+// Start server
+app.listen(PORT, () => console.log(`N0B1M0 checkout server running on port ${PORT}`));
