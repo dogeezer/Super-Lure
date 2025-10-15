@@ -1,7 +1,6 @@
 // server.js
 import express from 'express';
 import bodyParser from 'body-parser';
-import fetch from 'node-fetch'; // If using Node 18+, you can use native fetch instead
 import path from 'path';
 import { fileURLToPath } from 'url';
 
