@@ -1,173 +1,86 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>N0B1M0 Checkout</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Super Lure Checkout</title>
 <style>
-body { font-family:sans-serif; background:#f5f5f5; color:#333; margin:0; padding:0; }
-header { background:#000; color:#fff; padding:20px; text-align:center; }
-.content { padding:30px; max-width:800px; margin:20px auto; background:white; border-radius:10px; }
-.cart-summary, .shipping-options { margin-bottom:20px; }
-.cart-item { display:flex; justify-content:space-between; margin-bottom:10px; }
-input, select, button { width:100%; padding:8px; margin-top:6px; border-radius:6px; border:1px solid #ccc; box-sizing:border-box; }
-button { background:#3B5998; color:white; border:none; cursor:pointer; }
-button:hover { background:#2b4f7a; }
-.summary-line { display:flex; justify-content:space-between; }
-.summary-total { font-weight:bold; margin-top:8px; }
+  body { font-family: Arial, sans-serif; padding: 20px; }
+  label, select, input { display: block; margin: 10px 0; }
+  #total { font-weight: bold; }
 </style>
 </head>
 <body>
-<header><h1>N0B1M0 Checkout</h1></header>
 
-<section class="content">
-<h2>Order Summary</h2>
-<div class="cart-summary" id="cart-summary"></div>
+<h1>Checkout</h1>
 
-<h2>Shipping Info</h2>
-<form id="checkout-form">
-<label>Postal Code *</label>
-<input type="text" id="postal" required placeholder="e.g., M5V1K2">
-
-<div class="shipping-options">
-<label>Select Shipping</label>
-<select id="shipping-select" required>
-<option value="">-- Enter postal code first --</option>
+<label for="shipping">Shipping Method:</label>
+<select id="shipping">
+  <option value="">-- Loading rates... --</option>
 </select>
-</div>
 
-<label>Full Name *</label>
-<input type="text" id="name" required>
-<label>Email *</label>
-<input type="email" id="email" required>
+<label for="price">Product Price:</label>
+<input type="number" id="price" value="50" step="0.01">
 
-<div style="margin-top:20px;">
-<div class="summary-line"><div>Subtotal</div><div id="subtotal">$0.00</div></div>
-<div class="summary-line"><div>Shipping</div><div id="shipping-cost">$0.00</div></div>
-<div class="summary-total"><div>Total</div><div id="total">$0.00</div></div>
-</div>
-
-<button type="submit" style="margin-top:20px;">Proceed to Payment</button>
-</form>
-
-<div id="paypal-button-container" style="margin-top:20px;"></div>
-</section>
+<p id="total">Total: $50.00</p>
 
 <script>
-const cart = [{
-  name: 'N0B1M0 Lure',
-  price: 7.60,
-  qty: 1,
-  weight: 0.015,
-  length: 15,
-  width: 5,
-  height: 10
-}];
+const shippingSelect = document.getElementById('shipping');
+const priceInput = document.getElementById('price');
+const totalEl = document.getElementById('total');
 
-function renderCart() {
-  const el = document.getElementById('cart-summary');
-  el.innerHTML = '';
-  let subtotal = 0;
-  cart.forEach(item=>{
-    const div = document.createElement('div');
-    div.className='cart-item';
-    div.innerHTML=`<div>${item.name} x ${item.qty}</div><div>$${(item.price*item.qty).toFixed(2)}</div>`;
-    el.appendChild(div);
-    subtotal += item.price*item.qty;
-  });
-  document.getElementById('subtotal').textContent=`$${subtotal.toFixed(2)}`;
-  updateTotal();
-}
-
-function updateTotal(){
-  const subtotal=parseFloat(document.getElementById('subtotal').textContent.replace('$',''))||0;
-  const shipping=parseFloat(document.getElementById('shipping-cost').textContent.replace('$',''))||0;
-  document.getElementById('total').textContent=`$${(subtotal+shipping).toFixed(2)}`;
-}
-
-renderCart();
-
-const postalInput=document.getElementById('postal');
-const shippingSelect=document.getElementById('shipping-select');
-
-postalInput.addEventListener('change', async () => {
-  let postal = postalInput.value.trim().toUpperCase().replace(/\s/g,'');
-  if (!postal) return;
-  shippingSelect.innerHTML = '<option>Loading...</option>';
-
+async function fetchShippingRates() {
   try {
-    const res = await fetch('/api/canadapost-rate', {
+    const response = await fetch('/api/canadapost-rate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        postal,
-        weight: cart.reduce((w,i)=>w+i.weight*i.qty,0),
-        length: cart.reduce((l,i)=>Math.max(l,i.length),0),
-        width: cart.reduce((w,i)=>Math.max(w,i.width),0),
-        height: cart.reduce((h,i)=>Math.max(h,i.height),0)
+        weight: 0.015,
+        length: 15,
+        width: 5,
+        height: 10,
+        destinationPostalCode: 'M5V1K2'
       })
     });
 
-    const text = await res.text();
+    const text = await response.text();
     const parser = new DOMParser();
-    const xml = parser.parseFromString(text, 'application/xml');
-
+    const xmlDoc = parser.parseFromString(text, "application/xml");
     const ns = "http://www.canadapost.ca/ws/ship/rate-v4";
-    const quotes = Array.from(xml.getElementsByTagNameNS(ns, 'price-quote'));
 
+    const quotes = Array.from(xmlDoc.getElementsByTagNameNS(ns, 'price-quote'));
     if (!quotes.length) {
       shippingSelect.innerHTML = '<option value="">No rates available</option>';
-      document.getElementById('shipping-cost').textContent = '$0.00';
-      updateTotal();
       return;
     }
 
     shippingSelect.innerHTML = '<option value="">-- Select Shipping --</option>';
     quotes.forEach(q => {
       const serviceName = q.getElementsByTagNameNS(ns, 'service-name')[0]?.textContent || 'Unknown';
-      const duePrice = parseFloat(q.getElementsByTagNameNS(ns, 'due')[0]?.textContent || 0);
-      const opt = document.createElement('option');
-      opt.value = duePrice;
-      opt.textContent = `${serviceName} - $${duePrice.toFixed(2)}`;
-      shippingSelect.appendChild(opt);
+      const due = parseFloat(q.getElementsByTagNameNS(ns, 'due')[0]?.textContent || 0);
+      const option = document.createElement('option');
+      option.value = due;
+      option.textContent = `${serviceName} - $${due.toFixed(2)}`;
+      shippingSelect.appendChild(option);
     });
 
-  } catch(err) {
+  } catch (err) {
     console.error(err);
-    shippingSelect.innerHTML = '<option value="">Error fetching rates</option>';
+    shippingSelect.innerHTML = '<option value="">Error loading rates</option>';
   }
-});
+}
 
-shippingSelect.addEventListener('change', ()=>{
-  const price=parseFloat(shippingSelect.value)||0;
-  document.getElementById('shipping-cost').textContent=`$${price.toFixed(2)}`;
-  updateTotal();
-});
+function updateTotal() {
+  const productPrice = parseFloat(priceInput.value) || 0;
+  const shippingCost = parseFloat(shippingSelect.value) || 0;
+  totalEl.textContent = `Total: $${(productPrice + shippingCost).toFixed(2)}`;
+}
 
-// PayPal
-const PAYPAL_CLIENT_ID = "AZPob5p8BVkFnCvv698dRuJvNJyNz27PZlwD86gO6LzqZJvbbrx4a2MuLqH1IfXsvNdBKgOgDDcTLXQk";
+shippingSelect.addEventListener('change', updateTotal);
+priceInput.addEventListener('input', updateTotal);
 
-const loadPaypal=()=>{
-  const script=document.createElement('script');
-  script.src=`https://www.paypal.com/sdk/js?client-id=${PAYPAL_CLIENT_ID}&currency=CAD`;
-  script.onload=()=>renderPaypal();
-  document.head.appendChild(script);
-};
-
-const renderPaypal=()=>{
-  paypal.Buttons({
-    createOrder:(data,actions)=>{
-      const total=parseFloat(document.getElementById('total').textContent.replace('$','')).toFixed(2);
-      return actions.order.create({purchase_units:[{amount:{currency_code:'CAD',value:total}}]});
-    },
-    onApprove:(data,actions)=>actions.order.capture().then(details=>{
-      alert(`Payment completed by ${details.payer.name.given_name}`);
-      window.location.href='/thankyou';
-    })
-  }).render('#paypal-button-container');
-};
-
-loadPaypal();
+fetchShippingRates();
 </script>
+
 </body>
 </html>
