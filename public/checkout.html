@@ -29,6 +29,24 @@
   .small { font-size:0.9rem; color:#555; }
 </style>
 </head>
+
+  import express from "express";
+import { getShippingRate } from "./canadapost.js";
+
+const app = express();
+
+app.get("/shipping-rate", async (req, res) => {
+  const { origin, destination, weight } = req.query;
+  try {
+    const xmlData = await getShippingRate(origin, destination, weight || 1);
+    res.send(xmlData); // send XML response to frontend
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Error fetching shipping rate");
+  }
+});
+
+app.listen(3000, () => console.log("Server running on port 3000"));
 <body>
 
 <header>
