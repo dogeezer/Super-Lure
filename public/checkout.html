@@ -30,6 +30,21 @@
   .small { font-size:0.9rem; color:#555; }
 </style>
 </head>
+
+<script>
+async function getShipping() {
+  const postalCode = document.getElementById("postal").value;
+  const res = await fetch("/get-shipping", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ postalCode })
+  });
+
+  const data = await res.text();
+  document.getElementById("shippingResult").innerText = data;
+}
+</script>
+
 <body>
 
 <header>
