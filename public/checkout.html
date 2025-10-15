@@ -1,241 +1,97 @@
-/* -------------------------
-   CART (from localStorage)
-   ------------------------- */
-let cart = JSON.parse(localStorage.getItem('cart')) || [];
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Super Lure Checkout</title>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+<style>
+  body { font-family:'Roboto', sans-serif; margin:0; padding:0; background:#f5f5f5; color:#333; }
+  header { background:#000; color:white; padding:20px; text-align:center; }
+  h1,h2 { text-align:center; }
+  .content { padding:30px; max-width:1000px; margin:20px auto; background:white; border-radius:10px; box-shadow:0 4px 12px rgba(0,0,0,0.08); }
+  .cart-summary { margin-bottom:20px; }
+  .cart-item { display:flex; justify-content:space-between; margin-bottom:10px; }
+  form label { display:block; margin-top:10px; font-weight:bold; }
+  form input, form textarea, form select { width:100%; padding:8px; margin-top:6px; border-radius:6px; border:1px solid #ccc; box-sizing:border-box; }
+  form textarea { resize:vertical; min-height:80px; }
+  button { padding:10px 18px; background:#3B5998; color:white; border:none; border-radius:6px; font-weight:bold; cursor:pointer; }
+  button:hover { background:#2b4f7a; }
+  .required-star { color:red; }
+  .button-container { display:flex; justify-content:center; gap:18px; margin-top:20px; flex-wrap:wrap; }
+  .phone-container { display:flex; gap:8px; align-items:center; }
+  select.country-code { width:30%; min-width:140px; font-size:13px; }
+  #paypal-button-container { margin-top:20px; }
+  #back-btn { background:#777; margin-top:15px; padding:8px 14px; font-size:14px; cursor:pointer; border-radius:6px; color:white; border:none; }
+  .two-col { display:grid; grid-template-columns: 1fr 1fr; gap:12px; align-items:start; }
+  .summary-line { display:flex; justify-content:space-between; padding:4px 0; }
+  .summary-total { font-weight:700; font-size:1.05rem; margin-top:8px; }
+  .small { font-size:0.9rem; color:#555; }
+</style>
+</head>
+<body>
 
-/* -------------------------
-   CONFIG: shipping & tax
-   ------------------------- */
-const SHIPPING_PER_ITEM = 1.28;
-const DEFAULT_COUNTRY_TAX = 0.10;
-const countryTaxRates = { "CA":0.0,"US":0.0,"GB":0.20,"FR":0.20,"DE":0.19,"IT":0.22,"ES":0.21,"AU":0.10,"JP":0.10,"IN":0.18,"CN":0.13,"BR":0.12,"MX":0.16,"RU":0.20,"ZA":0.15,"NZ":0.15,"CH":0.077 };
-const subdivisions = {
-  "CA": {"ON":{name:"Ontario",tax:0.13},"QC":{name:"Quebec",tax:0.14975},"BC":{name:"British Columbia",tax:0.12},"AB":{name:"Alberta",tax:0.05}},
-  "US": {"CA":{name:"California",tax:0.0725},"NY":{name:"New York",tax:0.04},"TX":{name:"Texas",tax:0.0625}}
-};
+<header>
+  <h1>Super Lure Checkout</h1>
+</header>
 
-// Variable to store the dynamic shipping rate from Canada Post
-let canadaPostShippingCost = null;
+<section class="content">
 
+  <div id="step1">
+    <h2>Order Summary</h2>
+    <div class="cart-summary" id="cart-summary"></div>
 
-/* -------------------------
-   DOM refs
-   ------------------------- */
-const cartSummaryEl = document.getElementById('cart-summary');
-const cartSummary2El = document.getElementById('cart-summary-2');
-const countryEl = document.getElementById('country');
-const subdivisionEl = document.getElementById('subdivision');
-const countryCodeEl = document.getElementById('country_code');
-const addressEl = document.getElementById('address'); // Address input element
+    <h2>Shipping & Billing Info</h2>
 
+    <form id="checkout-form" novalidate>
+      <label>Full Name <span class="required-star">*</span></label>
+      <input type="text" id="name" required>
 
-/* -------------------------
-   Populate countries
-   ------------------------- */
-const countryOptions = [
-  { iso:"CA", name:"Canada (+1)", dial:"+1" },
-  { iso:"US", name:"United States (+1)", dial:"+1" },
-  { iso:"GB", name:"United Kingdom (+44)", dial:"+44" },
-  { iso:"FR", name:"France (+33)", dial:"+33" },
-  { iso:"DE", name:"Germany (+49)", dial:"+49" },
-  { iso:"IT", name:"Italy (+39)", dial:"+39" }
-];
+      <label>Email <span class="required-star">*</span></label>
+      <input type="email" id="email" required pattern=".+\.com$" title="Email must end with .com">
 
-function populateCountries() {
-  countryOptions.forEach(co=>{
-    const opt = document.createElement('option');
-    opt.value = co.iso;
-    opt.dataset.dial = co.dial;
-    opt.textContent = co.name;
-    countryEl.appendChild(opt);
-  });
-  countryOptions.forEach(co=>{
-    const opt = document.createElement('option');
-    opt.value = co.dial;
-    opt.textContent = co.name;
-    countryCodeEl.appendChild(opt);
-  });
-  countryEl.value='CA'; countryCodeEl.value='+1';
-}
-populateCountries();
+      <div class="two-col" style="margin-top:10px;">
+        <div>
+          <label>Country <span class="required-star">*</span></label>
+          <select id="country" required></select>
+        </div>
+        <div>
+          <label>State / Province <span class="required-star">*</span></label>
+          <select id="subdivision" required>
+            <option value="">-- Select country first --</option>
+          </select>
+        </div>
+      </div>
 
-function populateSubdivisions(countryIso) {
-  subdivisionEl.innerHTML='';
-  if (!countryIso){ subdivisionEl.innerHTML='<option value="">-- Select country first --</option>'; return;}
-  if (subdivisions[countryIso]){
-    const map=subdivisions[countryIso];
-    const empty=document.createElement('option'); empty.value=''; empty.textContent='-- Select state/province --';
-    subdivisionEl.appendChild(empty);
-    Object.keys(map).forEach(code=>{
-      const o=document.createElement('option'); o.value=code; o.textContent=map[code].name + ` (${(map[code].tax*100).toFixed(2)}%)`; subdivisionEl.appendChild(o);
-    });
-    subdivisionEl.disabled=false;
-  } else { const o=document.createElement('option'); o.value='__none'; o.textContent='No state/province'; subdivisionEl.appendChild(o); subdivisionEl.disabled=true;}
-}
+      <label style="margin-top:12px;">Address <span class="required-star">*</span></label>
+      <input type="text" id="address" required>
 
+      <label>Phone <span class="required-star">*</span></label>
+      <div class="phone-container">
+        <select name="country_code" id="country_code" class="country-code" required></select>
+        <input type="tel" id="phone" placeholder="Phone number" required style="flex:1;"/>
+      </div>
 
-/* -------------------------
-   Calculation Functions (Including Canada Post Logic)
-   ------------------------- */
-function totalQuantity(){ return cart.reduce((s,i)=>s+(i.qty||0),0);}
-function calcSubtotal(){ return cart.reduce((s,i)=>s+(i.price*i.qty),0);}
+      <label>Additional Info</label>
+      <textarea id="additional" placeholder="Optional notes..."></textarea>
 
-// calcShipping now uses the dynamic rate if available
-function calcShipping(){ 
-    if(canadaPostShippingCost !== null) {
-        return canadaPostShippingCost;
-    }
-    // Fallback to the fixed rate per item for non-CA or if API fails
-    return SHIPPING_PER_ITEM * totalQuantity();
-}
+      <div class="button-container">
+        <button type="button" id="exit-btn" style="background:#777;">Exit Checkout</button>
+        <button type="submit" id="to-payment">Continue to Payment</button>
+      </div>
+    </form>
+  </div>
 
-// Helper function to re-render the cart in both steps
-function updateShippingCostDisplay() {
-    renderCart(cartSummaryEl);
-    if(document.getElementById('step2').style.display !== 'none') {
-        renderCart(cartSummary2El);
-    }
-}
+  <div id="step2" style="display:none;">
+    <h2>Order Summary</h2>
+    <div class="cart-summary" id="cart-summary-2"></div>
+    <div id="paypal-button-container"></div>
+    <button id="back-btn">← Back to Info</button>
+  </div>
 
-async function fetchCanadaPostRates() {
-    const destinationCountry = countryEl.value;
-    
-    // Only attempt CP for Canadian domestic shipments
-    if (destinationCountry !== 'CA') {
-        canadaPostShippingCost = null; 
-        updateShippingCostDisplay();
-        return; 
-    }
+</section>
 
-    const destinationAddress = addressEl.value.trim();
-    if (!destinationAddress || destinationAddress.length < 5) {
-        canadaPostShippingCost = null;
-        updateShippingCostDisplay();
-        return; 
-    }
-    
-    // Simple way to extract a potential postal code from the address (last 6 characters)
-    const addressParts = destinationAddress.split(' ');
-    const postalCodePart = addressParts[addressParts.length - 1].replace(/[^A-Za-z0-9]/g, '').slice(-6);
-    
-    if (postalCodePart.length < 6) {
-        canadaPostShippingCost = null;
-        updateShippingCostDisplay();
-        return;
-    }
-
-    // Calculate total weight (placeholder: 100 grams (0.1 kg) per lure)
-    const totalWeight = cart.reduce((sum, item) => sum + (item.qty * 0.1), 0);
-    
-    const requestBody = {
-        destinationPostalCode: postalCodePart,
-        weight: totalWeight > 0 ? totalWeight : 0.1, // Ensure minimum weight
-        length: 15, // Default box dimensions (adjust as needed)
-        width: 10,
-        height: 5
-    };
-
-    try {
-        const response = await fetch('/api/get-shipping-rates', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(requestBody)
-        });
-
-        const rates = await response.json();
-
-        if (response.ok && rates.length > 0) {
-            // Find the cheapest rate
-            const cheapestRate = rates.sort((a, b) => a.price - b.price)[0];
-            canadaPostShippingCost = cheapestRate.price;
-            console.log(`CP Rate set: ${cheapestRate.serviceName} at $${cheapestRate.price.toFixed(2)} CAD`);
-        } else {
-            console.warn('Could not get Canada Post rates. Falling back to fixed rate.', rates);
-            canadaPostShippingCost = null; 
-        }
-
-    } catch (error) {
-        console.error('Error fetching Canada Post rates:', error);
-        canadaPostShippingCost = null;
-    }
-    
-    updateShippingCostDisplay();
-}
-
-
-/* -------------------------
-   Cart rendering
-   ------------------------- */
-function getSelectedTaxRate(){ const countryIso=countryEl.value; const sub=subdivisionEl.value; if(subdivisions[countryIso]&&subdivisions[countryIso][sub]) return subdivisions[countryIso][sub].tax||0; if(countryTaxRates[countryIso]) return countryTaxRates[countryIso]; return DEFAULT_COUNTRY_TAX;}
-function renderCart(el){
-  const target=(typeof el==='string')?document.getElementById(el):el;
-  target.innerHTML='';
-  if(!cart||cart.length===0){target.innerHTML="<p>Your cart is empty.</p>"; return;}
-  cart.forEach(item=>{
-    const div=document.createElement('div'); div.className='cart-item';
-    const name=document.createElement('div'); name.textContent=`${item.name} x ${item.qty}`;
-    const price=document.createElement('div'); price.textContent=`$${(item.price*item.qty).toFixed(2)} CAD`;
-    div.appendChild(name); div.appendChild(price); target.appendChild(div);
-  });
-  const subtotal=calcSubtotal(), shipping=calcShipping(), taxRate=getSelectedTaxRate(), tax=subtotal*taxRate, total=subtotal+shipping+tax;
-  const lines=[{label:'Subtotal',value:subtotal},{label:`Shipping`,value:shipping},{label:`Tax (${(taxRate*100).toFixed(2)}%)`,value:tax}];
-  lines.forEach(l=>{ const ln=document.createElement('div'); ln.className='summary-line'; ln.innerHTML=`<div class="small">${l.label}</div><div class="small">$${l.value.toFixed(2)} CAD</div>`; target.appendChild(ln); });
-  const totalDiv=document.createElement('div'); totalDiv.className='summary-total'; totalDiv.innerHTML=`<div class="summary-line"><div>Total</div><div>$${total.toFixed(2)} CAD</div></div>`;
-  target.appendChild(totalDiv);
-}
-// Initial renders (will be updated by fetchCanadaPostRates on load)
-renderCart(cartSummaryEl);
-renderCart(cartSummary2El);
-
-
-/* -------------------------
-   Event listeners
-   ------------------------- */
-countryEl.addEventListener('change', ()=>{ 
-    populateSubdivisions(countryEl.value); 
-    renderCart(cartSummaryEl); 
-    fetchCanadaPostRates(); 
-});
-subdivisionEl.addEventListener('change', ()=>{ renderCart(cartSummaryEl); renderCart(cartSummary2El); });
-addressEl.addEventListener('blur', fetchCanadaPostRates); 
-
-
-document.getElementById('checkout-form').addEventListener('submit', e=>{
-  e.preventDefault();
-  // Show payment step
-  document.getElementById('step1').style.display='none';
-  document.getElementById('step2').style.display='block';
-  updateShippingCostDisplay(); // Ensure step 2 summary is fully updated
-  renderPaypalButton();
-});
-
-document.getElementById('back-btn').addEventListener('click', ()=>{
-  document.getElementById('step1').style.display='block';
-  document.getElementById('step2').style.display='none';
-});
-
-/* -------------------------
-   PayPal
-   ------------------------- */
-function renderPaypalButton(){
-  if(document.getElementById('paypal-button-container').children.length>0) return;
-  paypal.Buttons({
-    createOrder: function(data, actions) {
-      const total = calcSubtotal() + calcShipping() + (calcSubtotal()*getSelectedTaxRate());
-      return actions.order.create({ purchase_units:[{ amount:{ value: total.toFixed(2) } }] });
-    },
-    onApprove: function(data, actions) {
-      return actions.order.capture().then(function(details) {
-        alert('Transaction completed by '+details.payer.name.given_name);
-        cart=[]; localStorage.setItem('cart',JSON.stringify(cart));
-        window.location.href='/thankyou.html';
-      });
-    }
-  }).render('#paypal-button-container');
-}
-
-/* -------------------------
-   Populate subdivisions and fetch initial rates
-   ------------------------- */
-populateSubdivisions(countryEl.value);
-fetchCanadaPostRates(); // Fetch rates on load for default country/empty address
+<script src="https://www.paypal.com/sdk/js?client-id=AQJHxYufbd8KOGyloXOLO-__0P6K3FqQbwWgc1N3x7pGQNeRwYZtS2NRWinFZ-zOquqRQURSYYXWR1Nb&currency=CAD"></script>
+<script src="script.js"></script>
+</body>
+</html>
