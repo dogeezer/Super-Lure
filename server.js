@@ -84,4 +84,8 @@ app.post('/api/canadapost-rate', async (req, res) => {
 });
 
 // Start server
+// Serve checkout.html at root
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'checkout.html'));
+});
 app.listen(PORT, () => console.log(`N0B1M0 checkout server running on port ${PORT}`));
