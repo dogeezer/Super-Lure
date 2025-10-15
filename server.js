@@ -25,7 +25,8 @@ app.post('/api/canadapost-rate', async (req, res) => {
 </mailing-scenario>
 `;
 
-    console.log('Sending XML to Canada Post:\n', xml);
+    console.log('Sending XML to Canada Post:');
+    console.log(xml);
 
     const response = await fetch(CANADAPOST_URL, {
       method: 'POST',
@@ -37,14 +38,13 @@ app.post('/api/canadapost-rate', async (req, res) => {
       body: xml
     });
 
-    if (!response.ok) {
-      const text = await response.text();
-      console.error('Canada Post API error:', text);
-      return res.status(500).json({ error: 'Canada Post API error', details: text });
-    }
-
     const xmlText = await response.text();
-    console.log('Canada Post response XML:\n', xmlText);
+    console.log('Canada Post raw response:');
+    console.log(xmlText);
+
+    if (!response.ok) {
+      return res.status(500).json({ error: 'Canada Post API error', details: xmlText });
+    }
 
     const rates = [];
     const regex = /<service-name>(.*?)<\/service-name>[\s\S]*?<price>(.*?)<\/price>/g;
@@ -53,6 +53,7 @@ app.post('/api/canadapost-rate', async (req, res) => {
       rates.push({ name: match[1], price: parseFloat(match[2]) });
     }
 
+    console.log('Parsed rates:', rates);
     res.json(rates);
 
   } catch (err) {
