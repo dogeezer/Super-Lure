@@ -1,21 +1,17 @@
-async function calculateShipping() {
-  const button = document.getElementById("shipping-btn");
-  button.disabled = true;
-  button.textContent = "Calculating...";
+const express = require('express');
+const path = require('path');
+const app = express();
 
-  try {
-    const res = await fetch("/calculate-shipping", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({})
-    });
+app.use(express.json());
+app.use(express.static(path.join(__dirname, 'public')));
 
-    const text = await res.text();
-    document.getElementById("shipping-result").innerText = text;
-  } catch (err) {
-    document.getElementById("shipping-result").innerText = "Error: " + err.message;
-  }
+// Example endpoint for shipping (replace with your real API)
+app.post("/get-shipping", (req, res) => {
+  const { postalCode } = req.body;
+  // TODO: integrate Canada Post or other shipping calculation
+  const shippingCost = 1.28 * 2; // demo: 2 items × 1.28
+  res.send(`$${shippingCost.toFixed(2)} CAD`);
+});
 
-  button.disabled = false;
-  button.textContent = "Check Shipping Cost";
-}
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
