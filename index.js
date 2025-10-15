@@ -1,3 +1,6 @@
+require('dotenv').config();
+
+const apiKey = process.env.CANADA_POST_API_KEY;
 const express = require('express');
 const path = require('path');
 const app = express();
