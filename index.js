@@ -1,16 +1,11 @@
-const express = require("express");
+const express = require('express');
 const app = express();
-const port = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3000;
 
-app.use(express.static("public"));
-app.use(express.json());
-
-app.get("/api/shipping", (req, res) => {
-  const { country, qty } = req.query;
-  const baseRate = 1.25;
-  const rate = country === "Canada" ? 1.15 : 1.35;
-  const total = (qty || 1) * baseRate * rate;
-  res.json({ shipping: total });
+app.get('/', (req, res) => {
+  res.send('<h1>Super Lure is live!</h1><p>Welcome to the site.</p>');
 });
 
-app.listen(port, () => console.log(`✅ Server running on ${port}`));
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
+});
