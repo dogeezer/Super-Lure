@@ -58,7 +58,7 @@ const cart = [{
   name: 'N0B1M0 Lure',
   price: 7.60,
   qty: 1,
-  weight: 0.015, // kg
+  weight: 0.015,
   length: 15,
   width: 5,
   height: 10
@@ -68,30 +68,30 @@ function renderCart() {
   const el = document.getElementById('cart-summary');
   el.innerHTML = '';
   let subtotal = 0;
-  cart.forEach(item => {
+  cart.forEach(item=>{
     const div = document.createElement('div');
-    div.className = 'cart-item';
-    div.innerHTML = `<div>${item.name} x ${item.qty}</div><div>$${(item.price*item.qty).toFixed(2)}</div>`;
+    div.className='cart-item';
+    div.innerHTML=`<div>${item.name} x ${item.qty}</div><div>$${(item.price*item.qty).toFixed(2)}</div>`;
     el.appendChild(div);
     subtotal += item.price*item.qty;
   });
-  document.getElementById('subtotal').textContent = `$${subtotal.toFixed(2)}`;
+  document.getElementById('subtotal').textContent=`$${subtotal.toFixed(2)}`;
   updateTotal();
 }
 
-function updateTotal() {
-  const subtotal = parseFloat(document.getElementById('subtotal').textContent.replace('$',''))||0;
-  const shipping = parseFloat(document.getElementById('shipping-cost').textContent.replace('$',''))||0;
-  document.getElementById('total').textContent = `$${(subtotal+shipping).toFixed(2)}`;
+function updateTotal(){
+  const subtotal=parseFloat(document.getElementById('subtotal').textContent.replace('$',''))||0;
+  const shipping=parseFloat(document.getElementById('shipping-cost').textContent.replace('$',''))||0;
+  document.getElementById('total').textContent=`$${(subtotal+shipping).toFixed(2)}`;
 }
 
 renderCart();
 
-const postalInput = document.getElementById('postal');
-const shippingSelect = document.getElementById('shipping-select');
+const postalInput=document.getElementById('postal');
+const shippingSelect=document.getElementById('shipping-select');
 
 postalInput.addEventListener('change', async () => {
-  let postal = postalInput.value.trim().toUpperCase().replace(/\s/g,''); // remove spaces
+  let postal = postalInput.value.trim().toUpperCase().replace(/\s/g,'');
   if (!postal) return;
   shippingSelect.innerHTML = '<option>Loading...</option>';
 
@@ -111,7 +111,9 @@ postalInput.addEventListener('change', async () => {
     const text = await res.text();
     const parser = new DOMParser();
     const xml = parser.parseFromString(text, 'application/xml');
-    const quotes = Array.from(xml.getElementsByTagNameNS('http://www.canadapost.ca/ws/ship/rate-v4','price-quote'));
+
+    const ns = "http://www.canadapost.ca/ws/ship/rate-v4";
+    const quotes = Array.from(xml.getElementsByTagNameNS(ns, 'price-quote'));
 
     if (!quotes.length) {
       shippingSelect.innerHTML = '<option value="">No rates available</option>';
@@ -122,11 +124,11 @@ postalInput.addEventListener('change', async () => {
 
     shippingSelect.innerHTML = '<option value="">-- Select Shipping --</option>';
     quotes.forEach(q => {
-      const name = q.getElementsByTagNameNS('http://www.canadapost.ca/ws/ship/rate-v4','service-name')[0].textContent;
-      const due = parseFloat(q.getElementsByTagNameNS('http://www.canadapost.ca/ws/ship/rate-v4','due')[0].textContent);
+      const serviceName = q.getElementsByTagNameNS(ns, 'service-name')[0]?.textContent || 'Unknown';
+      const duePrice = parseFloat(q.getElementsByTagNameNS(ns, 'due')[0]?.textContent || 0);
       const opt = document.createElement('option');
-      opt.value = due;
-      opt.textContent = `${name} - $${due.toFixed(2)}`;
+      opt.value = duePrice;
+      opt.textContent = `${serviceName} - $${duePrice.toFixed(2)}`;
       shippingSelect.appendChild(opt);
     });
 
@@ -136,29 +138,29 @@ postalInput.addEventListener('change', async () => {
   }
 });
 
-shippingSelect.addEventListener('change', () => {
-  const price = parseFloat(shippingSelect.value)||0;
-  document.getElementById('shipping-cost').textContent = `$${price.toFixed(2)}`;
+shippingSelect.addEventListener('change', ()=>{
+  const price=parseFloat(shippingSelect.value)||0;
+  document.getElementById('shipping-cost').textContent=`$${price.toFixed(2)}`;
   updateTotal();
 });
 
 // PayPal
 const PAYPAL_CLIENT_ID = "AZPob5p8BVkFnCvv698dRuJvNJyNz27PZlwD86gO6LzqZJvbbrx4a2MuLqH1IfXsvNdBKgOgDDcTLXQk";
 
-const loadPaypal = () => {
-  const script = document.createElement('script');
-  script.src = `https://www.paypal.com/sdk/js?client-id=${PAYPAL_CLIENT_ID}&currency=CAD`;
-  script.onload = () => renderPaypal();
+const loadPaypal=()=>{
+  const script=document.createElement('script');
+  script.src=`https://www.paypal.com/sdk/js?client-id=${PAYPAL_CLIENT_ID}&currency=CAD`;
+  script.onload=()=>renderPaypal();
   document.head.appendChild(script);
 };
 
-const renderPaypal = () => {
+const renderPaypal=()=>{
   paypal.Buttons({
-    createOrder: (data, actions) => {
-      const total = parseFloat(document.getElementById('total').textContent.replace('$','')).toFixed(2);
+    createOrder:(data,actions)=>{
+      const total=parseFloat(document.getElementById('total').textContent.replace('$','')).toFixed(2);
       return actions.order.create({purchase_units:[{amount:{currency_code:'CAD',value:total}}]});
     },
-    onApprove: (data, actions) => actions.order.capture().then(details => {
+    onApprove:(data,actions)=>actions.order.capture().then(details=>{
       alert(`Payment completed by ${details.payer.name.given_name}`);
       window.location.href='/thankyou';
     })
