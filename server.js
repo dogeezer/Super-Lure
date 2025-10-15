@@ -1,8 +1,8 @@
-// server.js
 import express from 'express';
 import bodyParser from 'body-parser';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import fetch from 'node-fetch';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -14,17 +14,16 @@ const __dirname = path.dirname(__filename);
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// --- Replace with your Canada Post credentials ---
+// --- Canada Post credentials ---
 const CANADAPOST_USERNAME = '399dd571f6bd9717';
 const CANADAPOST_PASSWORD = '0c44766df20c50f62771a9';
-const CANADAPOST_URL = 'https://ct.soa-gw.canadapost.ca/rs/ship/price'; // Production or test
+const CANADAPOST_URL = 'https://ct.soa-gw.canadapost.ca/rs/ship/price';
 
-// --- Canada Post Rate API ---
+// --- Canada Post API endpoint ---
 app.post('/api/canadapost-rate', async (req, res) => {
-  const { postal, country, weight, length, width, height } = req.body;
-
+  const { postal, weight, length, width, height } = req.body;
   if (!postal || !weight || !length || !width || !height) {
-    return res.status(400).json({ error: 'Missing fields' });
+    return res.status(400).json({ error: 'Missing parcel info' });
   }
 
   try {
@@ -58,21 +57,13 @@ app.post('/api/canadapost-rate', async (req, res) => {
       body: xml
     });
 
-    if (!response.ok) {
-      const text = await response.text();
-      return res.status(500).json({ error: 'Canada Post API error', details: text });
-    }
-
     const xmlText = await response.text();
-    // Minimal parsing
+
     const rates = [];
     const regex = /<service-name>(.*?)<\/service-name>[\s\S]*?<price>(.*?)<\/price>/g;
     let match;
     while ((match = regex.exec(xmlText)) !== null) {
-      rates.push({
-        name: match[1],
-        price: parseFloat(match[2])
-      });
+      rates.push({ name: match[1], price: parseFloat(match[2]) });
     }
 
     res.json(rates);
@@ -83,9 +74,9 @@ app.post('/api/canadapost-rate', async (req, res) => {
   }
 });
 
-// Start server
-// Serve checkout.html at root
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'checkout.html'));
-});
+// Serve pages
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
+app.get('/checkout', (req, res) => res.sendFile(path.join(__dirname, 'public', 'checkout.html')));
+app.get('/thankyou', (req, res) => res.sendFile(path.join(__dirname, 'public', 'thankyou.html')));
+
 app.listen(PORT, () => console.log(`N0B1M0 checkout server running on port ${PORT}`));
