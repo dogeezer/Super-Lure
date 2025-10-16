@@ -1,30 +1,30 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Super Lure Checkout</title>
-<script defer src="main.js"></script>
-</head>
-<body>
-<h1>Checkout</h1>
+document.getElementById("checkoutForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
 
-<form id="checkoutForm">
-  <input type="text" id="fullName" placeholder="Full Name" required /><br>
-  <input type="email" id="email" placeholder="Email" required /><br>
-  <input type="tel" id="phone" placeholder="Phone" required /><br>
-  <input type="text" id="address" placeholder="Address" required /><br>
-  <input type="text" id="postalCode" placeholder="Postal Code" required /><br>
-  <select id="country" required>
-    <option value="">Select Country</option>
-    <option value="CA">Canada</option>
-    <option value="US">United States</option>
-    <option value="GB">United Kingdom</option>
-    <option value="AU">Australia</option>
-  </select><br>
-  <button type="submit">Calculate Shipping</button>
-</form>
+  const postalCode = document.getElementById("postalCode").value.trim();
+  const country = document.getElementById("country").value;
 
-<div id="shippingResult"></div>
-</body>
-</html>
+  if (!postalCode || !country) {
+    document.getElementById("shippingResult").innerText = "Please enter postal code and country.";
+    return;
+  }
+
+  try {
+    const response = await fetch("/checkout/get-rates", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ destinationPostalCode: postalCode, country }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || "Error calculating shipping.");
+    }
+
+    const text = await response.text();
+    document.getElementById("shippingResult").innerText = "Shipping rate response:\n" + text;
+  } catch (err) {
+    console.error(err);
+    document.getElementById("shippingResult").innerText = "Error calculating shipping.";
+  }
+});
