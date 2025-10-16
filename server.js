@@ -90,5 +90,13 @@ app.post("/api/canadapost-rate", async (req, res) => {
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "checkout.html"));
 });
+// Serve the first page (cart + shipping)
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'checkout.html'));
+});
 
+// Serve the payment page
+app.get('/checkout', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'payment.html'));
+});
 app.listen(PORT, () => console.log(`✅ Super-Lure server running on port ${PORT}`));
