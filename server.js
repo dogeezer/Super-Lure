@@ -1,102 +1,78 @@
-// server.js
-const express = require('express');
-const axios = require('axios');
-const xml2js = require('xml2js');
-const cors = require('cors');
+import express from 'express';
+import bodyParser from 'body-parser';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import fetch from 'node-fetch'; // make sure node-fetch is installed
 
 const app = express();
+const PORT = process.env.PORT || 3000;
 
-// Middleware
-app.use(cors());                     // Allow cross-origin requests
-app.use(express.json());             // Parse JSON request bodies
-app.use(express.static('public'));   // Serve static files (HTML, CSS, JS)
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-// --- BASIC CHECKOUT CALCULATOR ENDPOINT ---
-app.post('/checkout/get-rates', (req, res) => {
-  const { cart, destPostal } = req.body;
+app.use(bodyParser.json());
+app.use(express.static(path.join(__dirname, 'public')));
 
-  const subtotal = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
-  const shipping = cart.reduce((sum, item) => sum + item.qty * 1.28, 0); // $1.28 per item
-  const total = subtotal + shipping;
+// --- Replace with your Canada Post credentials ---
+const CANADAPOST_USERNAME = '399dd571f6bd9717';
+const CANADAPOST_PASSWORD = '0c44766df20c50f62771a9';
+const CANADAPOST_URL = 'https://ct.soa-gw.canadapost.ca/rs/ship/price'; 
 
-  res.json({ subtotal, shipping, total });
-});
+app.post('/api/canadapost-rate', async (req, res) => {
+  const { postal, country, weight, length, width, height } = req.body;
+  if (!postal || !weight || !length || !width || !height) {
+    return res.status(400).json({ error: 'Missing fields' });
+  }
 
-// --- HOME PAGE ---
-app.get('/', (req, res) => {
-  res.send('<h1>Welcome to Super Lure Sandbox</h1><p>Use POST /get-rates to get Canada Post sandbox rates.</p>');
-});
-
-// --- CANADA POST SANDBOX SETTINGS ---
-const CUSTOMER_NUMBER = process.env.CP_CUSTOMER_NUMBER;
-const USERNAME = process.env.CP_USERNAME;
-const PASSWORD = process.env.CP_PASSWORD;
-const API_URL = 'https://ct.soa-gw.canadapost.ca/rs/ship/price';
-
-// --- CANADA POST RATE ENDPOINT ---
-app.post('/get-rates', async (req, res) => {
   try {
-    const {
-      originPostal = 'N0B1M0',
-      destPostal = 'L4B2B9',
-      weight = 0.15,
-      length = 15,
-      width = 5,
-      height = 10
-    } = req.body || {};
+    const xml = `<mailing-scenario xmlns="http://www.canadapost.ca/ws/ship/rate-v4">
+      <customer-number>0001223271</customer-number>
+      <parcel-characteristics>
+        <weight>${weight}</weight>
+        <dimensions>
+          <length>${length}</length>
+          <width>${width}</width>
+          <height>${height}</height>
+        </dimensions>
+      </parcel-characteristics>
+      <origin-postal-code>M5V3L9</origin-postal-code>
+      <destination>
+        <domestic><postal-code>${postal}</postal-code></domestic>
+      </destination>
+    </mailing-scenario>`;
 
-    const xmlRequest = `
-      <mailing-scenario xmlns="http://www.canadapost.ca/ws/ship/rate-v4">
-        <customer-number>${CUSTOMER_NUMBER}</customer-number>
-        <parcel-characteristics>
-          <weight>${weight}</weight>
-          <dimensions>
-            <length>${length}</length>
-            <width>${width}</width>
-            <height>${height}</height>
-          </dimensions>
-        </parcel-characteristics>
-        <origin-postal-code>${originPostal}</origin-postal-code>
-        <destination>
-          <domestic>
-            <postal-code>${destPostal}</postal-code>
-          </domestic>
-        </destination>
-      </mailing-scenario>
-    `;
-
-    const response = await axios.post(API_URL, xmlRequest, {
+    const response = await fetch(CANADAPOST_URL, {
+      method: 'POST',
       headers: {
+        'Authorization': 'Basic ' + Buffer.from(`${CANADAPOST_USERNAME}:${CANADAPOST_PASSWORD}`).toString('base64'),
         'Content-Type': 'application/vnd.cpc.ship.rate-v4+xml',
-        Accept: 'application/vnd.cpc.ship.rate-v4+xml',
+        'Accept': 'application/vnd.cpc.ship.rate-v4+xml'
       },
-      auth: {
-        username: USERNAME,
-        password: PASSWORD,
-      },
+      body: xml
     });
 
-    xml2js.parseString(response.data, { explicitArray: false }, (err, result) => {
-      if (err) return res.json({ status: 'error', error: 'XML Parsing Failed' });
+    if (!response.ok) {
+      const text = await response.text();
+      return res.status(500).json({ error: 'Canada Post API error', details: text });
+    }
 
-      const rates = [];
-      const quotes = result['price-quotes']?.['price-quote'];
-      if (quotes) {
-        (Array.isArray(quotes) ? quotes : [quotes]).forEach(q => {
-          rates.push({
-            service: q['service-name'],
-            price: q['price-details']?.due
-          });
-        });
-      }
+    const xmlText = await response.text();
+    const rates = [];
+    const regex = /<service-name>(.*?)<\/service-name>[\s\S]*?<price>(.*?)<\/price>/g;
+    let match;
+    while ((match = regex.exec(xmlText)) !== null) {
+      rates.push({ name: match[1], price: parseFloat(match[2]) });
+    }
 
-      res.json({ status: 'success', rates });
-    });
-  } catch (e) {
-    res.json({ status: 'error', error: e.message });
+    res.json(rates);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
   }
 });
 
-// --- START SERVER ---
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`✅ Server running on port ${PORT}`));
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'checkout.html'));
+});
+
+app.listen(PORT, () => console.log(`Checkout server running on port ${PORT}`));
