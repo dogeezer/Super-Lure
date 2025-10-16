@@ -1,1 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Super Lure Checkout</title>
+</head>
+<body>
+<h1>Super Lure Checkout</h1>
 
+<form id="order-form">
+  <label>
+    Name: <input type="text" name="name" required>
+  </label><br>
+  <label>
+    Email: <input type="email" name="email" required>
+  </label><br>
+  <label>
+    Destination Postal Code: <input type="text" name="postal" required>
+  </label><br>
+  <button type="submit">Proceed to Checkout</button>
+</form>
+
+<script>
+const form = document.getElementById('order-form');
+form.addEventListener('submit', (e) => {
+  e.preventDefault();
+  const data = new FormData(form);
+  const postal = data.get('postal');
+
+  // Save order info to session storage
+  sessionStorage.setItem('customerName', data.get('name'));
+  sessionStorage.setItem('customerEmail', data.get('email'));
+  sessionStorage.setItem('destPostal', postal);
+
+  // Redirect to checkout page
+  window.location.href = 'checkout.html';
+});
+</script>
+</body>
+</html>
