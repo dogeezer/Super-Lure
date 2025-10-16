@@ -6,7 +6,6 @@ const cors = require('cors');
 // server.js (or app.js)
 
 // 1. Import express
-const express = require('express');
 const app = express();
 
 // 2. Middleware to parse JSON
