@@ -1,14 +1,89 @@
-document.getElementById('checkout-form').addEventListener('submit', function(e){
+<script>
+// --- CACHE DOM ELEMENTS ---
+const checkoutForm = document.getElementById('checkout-form');
+const step1 = document.getElementById('step1');
+const step2 = document.getElementById('step2');
+const cartSummary2El = document.getElementById('cart-summary-2');
+const countryEl = document.getElementById('country'); // <select id="country">
+const subdivisionEl = document.getElementById('subdivision'); // <select id="subdivision">
+
+// --- CART RENDER FUNCTION ---
+function renderCart(container) {
+  // Replace with your actual cart rendering logic
+  container.innerHTML = `
+    <p>Items: 3</p>
+    <p>Total: $14.14</p>
+  `;
+}
+
+// --- PAYPAL BUTTONS ---
+function renderPaypalButtons() {
+  paypal.Buttons({
+    createOrder: function(data, actions) {
+      return actions.order.create({
+        purchase_units: [{ amount: { value: '14.14' } }]
+      });
+    },
+    onApprove: function(data, actions) {
+      return actions.order.capture().then(function(details) {
+        alert('Transaction completed by ' + details.payer.name.given_name);
+      });
+    }
+  }).render('#paypal-buttons');
+}
+
+function loadPaypalAndRender() {
+  const script = document.createElement('script');
+  script.src = 'https://www.paypal.com/sdk/js?client-id=YOUR_CLIENT_ID';
+  script.onload = renderPaypalButtons;
+  document.head.appendChild(script);
+}
+
+// --- COUNTRY/SUBDIVISION LOGIC ---
+const subdivisions = {
+  "USA": ["Alabama","Alaska","California","New York","Texas"],
+  "Canada": ["Ontario","Quebec","British Columbia","Alberta"]
+};
+
+countryEl.addEventListener('change', () => {
+  const country = countryEl.value;
+  subdivisionEl.innerHTML = '';
+  
+  if (subdivisions[country]) {
+    subdivisionEl.disabled = false;
+    subdivisions[country].forEach(state => {
+      const option = document.createElement('option');
+      option.value = state;
+      option.textContent = state;
+      subdivisionEl.appendChild(option);
+    });
+  } else {
+    subdivisionEl.disabled = true;
+  }
+});
+
+// --- FORM SUBMISSION ---
+checkoutForm.addEventListener('submit', function(e) {
   e.preventDefault();
-  if (subdivisionEl.disabled === false && !subdivisionEl.value) {
+
+  // Check if subdivision is required
+  if (!subdivisionEl.disabled && !subdivisionEl.value) {
     alert('Please select a state / province.');
     return;
   }
 
-  document.getElementById('step1').style.display = 'none';
-  document.getElementById('step2').style.display = 'block';
+  // Move to step 2
+  step1.style.display = 'none';
+  step2.style.display = 'block';
 
+  // Render cart summary for step 2
   renderCart(cartSummary2El);
-  if (window.paypal) renderPaypalButtons(); 
-  else loadPaypalAndRender();
+
+  // Render PayPal buttons
+  if (window.paypal) {
+    renderPaypalButtons();
+  } else {
+    loadPaypalAndRender();
+  }
 });
+</script>
