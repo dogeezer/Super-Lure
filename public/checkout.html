@@ -1,78 +1,44 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Super Lure Checkout</title>
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css">
+<style>
+  body { font-family:'Roboto', sans-serif; margin:0; padding:0; background:#f5f5f5; }
+  .container { max-width:600px; margin:50px auto; background:#fff; padding:20px; border-radius:8px; }
+</style>
 </head>
 <body>
+<div class="container">
+  <h1>Checkout</h1>
+  <form id="checkout-form">
+    <label>Weight (kg):
+      <input type="number" id="weight" value="1">
+    </label>
+    <button type="submit">Calculate Shipping</button>
+  </form>
+  <div id="result"></div>
+</div>
 
-<header>
-  <h1>Super Lure Checkout</h1>
-</header>
+<script>
+const form = document.getElementById('checkout-form');
+const resultDiv = document.getElementById('result');
 
-<section class="content">
-
-  <!-- Step 1: Customer info -->
-  <div id="step1">
-    <h2>Order Summary</h2>
-    <div class="cart-summary" id="cart-summary"></div>
-
-    <h2>Shipping & Billing Info</h2>
-    <form id="checkout-form" novalidate>
-      <label>Full Name <span class="required-star">*</span></label>
-      <input type="text" id="name" required>
-
-      <label>Email <span class="required-star">*</span></label>
-      <input type="email" id="email" required pattern=".+\.com$" title="Email must end with .com">
-
-      <div class="two-col" style="margin-top:10px;">
-        <div>
-          <label>Country <span class="required-star">*</span></label>
-          <select id="country" required></select>
-        </div>
-        <div>
-          <label>State / Province <span class="required-star">*</span></label>
-          <select id="subdivision" required>
-            <option value="">-- Select country first --</option>
-          </select>
-        </div>
-      </div>
-
-      <label style="margin-top:12px;">Address <span class="required-star">*</span></label>
-      <input type="text" id="address" required>
-
-      <label>Postal / ZIP Code <span class="required-star">*</span></label>
-      <input type="text" id="postal" required>
-
-      <label>Phone <span class="required-star">*</span></label>
-      <div class="phone-container">
-        <select name="country_code" id="country_code" class="country-code" required></select>
-        <input type="tel" id="phone" placeholder="Phone number" required style="flex:1;"/>
-      </div>
-
-      <label>Additional Info</label>
-      <textarea id="additional" placeholder="Optional notes..."></textarea>
-
-      <div class="button-container">
-        <button type="button" id="exit-btn" style="background:#777;">Exit Checkout</button>
-        <button type="submit" id="to-payment">Continue to Payment</button>
-      </div>
-    </form>
-  </div>
-
-  <!-- Step 2: Payment -->
-  <div id="step2" style="display:none;">
-    <h2>Order Summary</h2>
-    <div class="cart-summary" id="cart-summary-2"></div>
-    <div id="paypal-button-container"></div>
-    <button id="back-btn">← Back to Info</button>
-  </div>
-
-</section>
-
-<script src="script.js"></script>
+form.addEventListener('submit', async e => {
+  e.preventDefault();
+  const weight = parseFloat(document.getElementById('weight').value);
+  
+  const res = await fetch('/calculate-shipping', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ weight })
+  });
+  const data = await res.json();
+  
+  resultDiv.innerHTML = 'Shipping: $' + data.shipping.toFixed(2);
+});
+</script>
 </body>
 </html>
