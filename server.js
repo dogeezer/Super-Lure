@@ -92,9 +92,9 @@ app.post('/get-rates', async (req, res) => {
 // Optional test endpoint for quick sandbox check
 app.get('/test-rate', async (req, res) => {
   req.body = {
-    originPostal: 'L4L9BK',
+    originPostal: 'N0B1M0',
     destPostal: 'L4B2B9',
-    weight: 1,
+    weight: 0.15,
     length: 13,
     width: 13,
     height: 5
