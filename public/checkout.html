@@ -1,31 +1,41 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Super Lure Checkout</title>
+  <meta charset="UTF-8">
+  <title>Checkout</title>
 </head>
 <body>
-<h1>Checkout</h1>
-<form id="checkout-form">
-  <label>Full Name: <input type="text" name="fullName" required></label><br>
-  <label>Email: <input type="email" name="email" required></label><br>
-  <label>Phone: <input type="text" name="phone" required></label><br>
-  <label>Address: <input type="text" name="address" required></label><br>
-  <label>Postal Code: <input type="text" id="postalCode" required></label><br>
-  <label>Country: 
-    <select id="country">
+  <h1>Checkout</h1>
+  <form id="checkoutForm">
+    <label>Full Name:</label><br>
+    <input type="text" id="name" required><br>
+
+    <label>Email:</label><br>
+    <input type="email" id="email" required><br>
+
+    <label>Phone:</label><br>
+    <input type="tel" id="phone" required><br>
+
+    <label>Address:</label><br>
+    <input type="text" id="address" required><br>
+
+    <label>Postal Code:</label><br>
+    <input type="text" id="postalCode" required><br>
+
+    <label>Country:</label><br>
+    <select id="country" required>
+      <option value="">Select country</option>
       <option value="CA">Canada</option>
       <option value="US">United States</option>
       <option value="GB">United Kingdom</option>
       <option value="AU">Australia</option>
-    </select>
-  </label><br>
-  <button type="button" id="calculate">Calculate Shipping</button>
-</form>
+    </select><br><br>
 
-<div id="shipping-result"></div>
+    <button type="submit">Calculate Shipping</button>
+  </form>
 
-<script src="main.js"></script>
+  <div id="shippingResult"></div>
+
+  <script src="main.js"></script>
 </body>
 </html>
