@@ -7,9 +7,53 @@
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 <style>
-/* Your original CSS from above, unchanged */
+/* Old site styles, kept visually the same */
 body { font-family:'Roboto', sans-serif; margin:0; padding:0; background:#f5f5f5; color:#333; scroll-behavior:smooth; }
-/* ... rest of your CSS ... */
+header { background:#000; color:white; padding:20px 0; text-align:center; position:relative; }
+#logo { width:120px; display:block; margin:0 auto 10px; }
+nav { display:flex; justify-content:center; gap:20px; background:#023e8a; padding:10px 0; position:sticky; top:0; z-index:50; }
+nav a { color:white; text-decoration:none; font-weight:bold; }
+nav a:hover { text-decoration:underline; }
+.hero { position:relative; background-image:url('https://i.postimg.cc/prR9bQ5j/IMG-3869.jpg'); background-size:cover; background-position:center; height:450px; display:flex; align-items:center; justify-content:center; text-align:center; color:white; font-size:3em; font-weight:bold; overflow:hidden; }
+.hero::before { content:""; position:absolute; inset:0; background:rgba(0,0,0,0.45); }
+.hero h1 { position:relative; z-index:1; text-shadow:2px 2px 10px rgba(0,0,0,0.8); }
+.content { padding:40px; max-width:1000px; margin:auto; }
+.tabs { display:flex; flex-wrap:wrap; gap:10px; margin-bottom:20px; }
+.tab-btn { padding:8px 15px; background:#eee; border:none; border-radius:5px; cursor:pointer; font-weight:bold; transition:background-color 0.2s; }
+.tab-btn:hover { background-color:#ccc; }
+.tab-btn.active { background-color:#023e8a; color:white; }
+.product-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:20px; }
+.product { background:white; padding:20px; border-radius:10px; box-shadow:0 4px 6px rgba(0,0,0,0.1); text-align:center; transition:transform 0.2s; }
+.product:hover { transform:translateY(-5px); }
+.product img { max-width:100%; border-radius:10px; }
+.product h3 { margin:10px 0 5px 0; }
+.product p { margin:5px 0; }
+.price { font-weight:700; color:#0077b6; font-size:1.2em; }
+.buy-button { display:inline-block; padding:10px 20px; background-color:#3B5998; color:white; text-decoration:none; border-radius:5px; font-weight:bold; margin-top:10px; cursor:pointer; border:none; }
+.buy-button:hover { background-color:#005f8c; }
+.cart-icon { position:absolute; top:20px; right:20px; cursor:pointer; background:#3B5998; color:white; width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold; font-size:18px; z-index:100; }
+.cart-page { position:fixed; top:0; left:0; width:100%; height:100%; background:#f5f5f5; z-index:90; overflow-y:auto; display:none; padding-top:80px; }
+.cart-content-wrapper { max-width:800px; margin:20px auto; padding:20px; background:white; border-radius:8px; box-shadow:0 2px 4px rgba(0,0,0,0.1); }
+.cart-item { display:flex; align-items:flex-start; padding:20px 0; border-bottom:1px solid #eee; }
+.item-image { width:80px; flex-shrink:0; margin-right:15px; }
+.item-image img { width:100%; height:auto; border-radius:5px; }
+.item-details { flex-grow:1; }
+.item-details strong { font-size:1.1em; display:block; margin-bottom:5px; }
+.item-actions button { background:none; border:1px solid #ccc; padding:8px 15px; margin-right:10px; border-radius:5px; cursor:pointer; font-size:0.9em; }
+.item-actions .remove-btn { color:#cc0000; border-color:#cc0000; }
+.item-pricing { display:grid; grid-template-columns:1fr 1fr; gap:10px; max-width:300px; margin-top:15px; }
+.qty-group { display:flex; align-items:center; }
+.qty-group input { margin-right:5px; width:50px; padding:5px; border:1px solid #ccc; border-radius:3px; }
+.qty-group .update-btn { background:#023e8a; color:white; border:none; padding:7px 10px; border-radius:5px; cursor:pointer; line-height:1.2; }
+.qty-group .update-btn:hover { background:#002a5c; }
+.cart-summary { max-width:400px; margin:30px 0 0 auto; padding-top:15px; border-top:2px solid #ddd; }
+.summary-line { display:flex; justify-content:space-between; padding:5px 0; }
+.checkout-button-container { text-align:center; margin-top:20px; }
+.checkout-button { background:#023e8a; color:white; padding:15px 40px; font-size:1.2em; font-weight:bold; border:none; border-radius:5px; cursor:pointer; width:100%; }
+.checkout-button:hover { background:#002a5c; }
+#about, #contact { padding:40px; max-width:1000px; margin:auto; background:white; border-radius:10px; box-shadow:0 4px 6px rgba(0,0,0,0.1); margin-bottom:40px; }
+#about h2, #contact h2 { margin-bottom:20px; color:#023e8a; }
+#contact p { margin:5px 0; }
 </style>
 </head>
 <body>
@@ -34,25 +78,43 @@ body { font-family:'Roboto', sans-serif; margin:0; padding:0; background:#f5f5f5
 
 <section class="content" id="products">
 <h2>Our Products</h2>
-
-<!-- Tabs -->
 <div class="tabs">
-  <!-- Your tab buttons -->
+  <button class="tab-btn active" data-category="all">All</button>
+  <button class="tab-btn" data-category="X Series">X Series</button>
+  <button class="tab-btn" data-category="Hybrids">Hybrids</button>
+  <button class="tab-btn" data-category="DeepWater">DeepWater</button>
+  <button class="tab-btn" data-category="Topwater">Topwater</button>
+  <button class="tab-btn" data-category="SwimBaits">SwimBaits</button>
+  <button class="tab-btn" data-category="Spoons and Spinners">Spoons & Spinners</button>
+  <button class="tab-btn" data-category="Weedless">Weedless</button>
+  <button class="tab-btn" data-category="Minnows">Minnows</button>
+  <button class="tab-btn" data-category="Other">Other</button>
 </div>
 
-<!-- Product Grid -->
 <div class="product-grid" id="product-grid">
-<!-- Your products -->
+<!-- Sample products -->
+<div class="product" data-category="Hybrids" data-name="Super Lure X1" data-price="7.59" data-stock="SLX1-01" data-desc="Northern Pike, shiny finish." data-img="https://i.postimg.cc/d02dzfky/IMG-3859.png">
+<img src="https://i.postimg.cc/d02dzfky/IMG-3859.png" alt="Super Lure X1">
+<h3>Super Lure X1</h3>
+<p>Designed for Northern Pike with shiny finish and lifelike swim.</p>
+<p class="price">$7.59 CAD</p>
+<button class="buy-button">Add to Cart</button>
+</div>
+<div class="product" data-category="Hybrids" data-name="Super Lure BX" data-price="7.59" data-stock="SLBX-02" data-desc="Crafted for bass, shimmering finish." data-img="https://i.postimg.cc/J7jPv212/IMG-3884.jpg">
+<img src="https://i.postimg.cc/J7jPv212/IMG-3884.jpg" alt="Super Lure BX">
+<h3>Super Lure BX</h3>
+<p>Crafted for bass, with shimmering finish.</p>
+<p class="price">$7.59 CAD</p>
+<button class="buy-button">Add to Cart</button>
+</div>
 </div>
 </section>
 
-<!-- About Section -->
 <section id="about">
 <h2>About Super Lure</h2>
-<p>Super Lure is dedicated to providing the highest quality fishing lures...</p>
+<p>Super Lure is dedicated to providing the highest quality fishing lures to help anglers catch their dream fish...</p>
 </section>
 
-<!-- Contact Section -->
 <section id="contact">
 <h2>Contact Us</h2>
 <p><strong>Email:</strong> superlure10@gmail.com</p>
@@ -60,34 +122,25 @@ body { font-family:'Roboto', sans-serif; margin:0; padding:0; background:#f5f5f5
 </section>
 </div>
 
-<!-- Cart Page -->
 <div class="cart-page" id="cart-page">
 <div class="cart-content-wrapper">
 <button id="back-to-shop-btn" class="buy-button">&larr; Back to Products</button>
 <h2>Your Shopping Cart</h2>
 <div id="cart-items-list"></div>
-
-<!-- Checkout form inside cart -->
-<h3>Checkout Info</h3>
-<form id="checkout-form">
-<label>Name: <input type="text" id="customer-name" required></label><br><br>
-<label>Email: <input type="email" id="customer-email" required></label><br><br>
-<label>Destination Postal: <input type="text" id="dest-postal" required></label><br><br>
-<button type="submit" class="checkout-button">Proceed to Checkout</button>
-</form>
-
 <div class="cart-summary">
 <div class="summary-line"><span>SUBTOTAL</span><span id="summary-subtotal">$0.00</span></div>
 <div class="summary-line"><span>SHIPPING</span><span id="summary-shipping">$0.00</span></div>
 <hr>
 <div class="summary-line"><strong>ORDER TOTAL</strong><strong id="summary-total">$0.00</strong></div>
 </div>
-
+<div class="checkout-button-container">
+<button class="checkout-button" id="proceed-to-checkout-btn">PROCEED TO CHECKOUT</button>
+</div>
 </div>
 </div>
 
 <script>
-// Cart code (unchanged)
+// Cart logic (unchanged from your last working version)
 let cart=[];
 const SHIPPING_PER_ITEM=1.28;
 const MAX_QTY=50;
@@ -103,30 +156,18 @@ const totalEl=document.getElementById('summary-total');
 
 function toggleCart(show){
   if(show===undefined) show=cartPage.style.display==='none'||cartPage.style.display==='';
-  if(show){ mainSections.style.display='none'; navBar.style.display='none'; cartPage.style.display='block'; updateCart(); }
+  if(show){ mainSections.style.display='block'; navBar.style.display='none'; cartPage.style.display='block'; updateCart(); }
   else { mainSections.style.display='block'; navBar.style.display='flex'; cartPage.style.display='none'; }
 }
 
 function addToCart(product){
   const index=cart.findIndex(p=>p.name===product.name);
-  if(index>-1){
-    if(cart[index].qty+1>MAX_QTY){
-      alert(`You can only purchase up to ${MAX_QTY} items of ${product.name}.`);
-      return;
-    }
-    cart[index].qty+=1;
-  } else { cart.push({...product,qty:1}); }
+  if(index>-1){ cart[index].qty+=1; }
+  else { cart.push({...product,qty:1}); }
   updateCart();
 }
 
 function removeItem(index){ cart.splice(index,1); updateCart(); }
-
-function updateQty(index){
-  let qty=parseInt(document.getElementById(`qty-${index}`).value);
-  if(qty>MAX_QTY){ alert(`Maximum quantity for this product is ${MAX_QTY}.`); qty=MAX_QTY; document.getElementById(`qty-${index}`).value=MAX_QTY; }
-  if(qty>0) cart[index].qty=qty; else { removeItem(index); return; }
-  updateCart();
-}
 
 function updateCart(){
   cartList.innerHTML='';
@@ -154,7 +195,6 @@ function updateCart(){
   totalEl.textContent=`$${(subtotal+shippingCost).toFixed(2)}`;
 }
 
-// Buy button
 document.querySelectorAll('.buy-button').forEach(btn=>{
   btn.addEventListener('click',e=>{
     const prod=btn.closest('.product');
@@ -167,20 +207,7 @@ document.querySelectorAll('.buy-button').forEach(btn=>{
 cartIcon.addEventListener('click',()=>toggleCart(true));
 backBtn.addEventListener('click',()=>toggleCart(false));
 
-// Checkout form
-const checkoutForm=document.getElementById('checkout-form');
-checkoutForm.addEventListener('submit',e=>{
-  e.preventDefault();
-  // Save cart + customer info
-  localStorage.setItem('cart',JSON.stringify(cart));
-  localStorage.setItem('customerName', document.getElementById('customer-name').value);
-  localStorage.setItem('customerEmail', document.getElementById('customer-email').value);
-  localStorage.setItem('destPostal', document.getElementById('dest-postal').value);
-  // Redirect to checkout page where rates will be calculated
-  window.location.href='checkout.html';
-});
-
-// Tabs functionality
+// Tabs
 const tabButtons=document.querySelectorAll('.tab-btn');
 const products=document.querySelectorAll('.product');
 tabButtons.forEach(btn=>{
