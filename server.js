@@ -2,7 +2,6 @@ import express from 'express';
 import bodyParser from 'body-parser';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import fetch from 'node-fetch'; // make sure node-fetch is installed
 
 const app = express();
 const PORT = process.env.PORT || 3000;
