@@ -1,5 +1,5 @@
 {
-  "name": "canadapost-api",
+  "name": "super-lure",
   "version": "1.0.0",
   "main": "server.js",
   "scripts": {
@@ -7,7 +7,8 @@
   },
   "dependencies": {
     "express": "^4.18.2",
-    "axios": "^1.5.0",
-    "xml2js": "^0.4.23"
+    "axios": "^1.6.3",
+    "xml2js": "^0.5.0",
+    "cors": "^2.8.5"
   }
 }
