@@ -1,13 +1,12 @@
 {
-  "name": "super-lure",
-  "version": "1.0.0",
   "type": "module",
-  "main": "server.js",
+  "dependencies": {
+    "axios": "^1.7.0",
+    "express": "^4.19.0",
+    "xml2js": "^0.6.2",
+    "cors": "^2.8.5"
+  },
   "scripts": {
     "start": "node server.js"
-  },
-  "dependencies": {
-    "express": "^4.19.2",
-    "xml2js": "^0.6.2"
   }
 }
