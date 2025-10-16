@@ -1,10 +1,10 @@
 {
   "name": "canadapost-test",
   "version": "1.0.0",
-  "type": "module",
-  "main": "canadapost_test.js",
+  "type": "commonjs",
+  "main": "canadapost_test.cjs",
   "scripts": {
-    "start": "node canadapost_test.js"
+    "start": "node canadapost_test.cjs"
   },
   "dependencies": {
     "dotenv": "^16.0.0"
