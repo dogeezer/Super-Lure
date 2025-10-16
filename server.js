@@ -1,21 +1,40 @@
-// server.js
 import express from 'express';
 import path from 'path';
+import fetch from 'node-fetch';
 import { fileURLToPath } from 'url';
 
-const app = express();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const app = express();
 
 app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public'))); // serve static files
+app.use(express.static(path.join(__dirname, 'public')));
 
-// Example endpoint for shipping calculation (replace with your API logic)
-app.post('/calculate-shipping', (req, res) => {
-  const { weight } = req.body;
-  // dummy calculation
-  const shipping = weight * 2; 
-  res.json({ shipping });
+// Canada Post API example endpoint
+app.post('/calculate-shipping', async (req, res) => {
+  const { postalCode, country, weight } = req.body;
+  
+  // Replace with your Canada Post credentials
+  const CANADA_POST_USER = 'YOUR_USERNAME';
+  const CANADA_POST_PASS = 'YOUR_PASSWORD';
+  
+  const originPostal = 'N0B1M0'; // your origin
+  const destinationPostal = postalCode;
+  const destinationCountry = country;
+  
+  // Simple Canada Post API URL (REST example)
+  const url = `https://ct.soa-gw.canadapost.ca/rs/ship/price`;
+  
+  try {
+    // This is a placeholder — Canada Post uses XML requests
+    // You would need to construct an XML body with weight, origin, destination
+    // Here we just return a dummy value for testing
+    const shippingCost = weight * 2.5; // dummy calculation
+    res.json({ shipping: shippingCost.toFixed(2) });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error calculating shipping' });
+  }
 });
 
 // Serve checkout page
