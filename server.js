@@ -8,7 +8,9 @@ const xml2js = require('xml2js');
 
 const app = express();
 app.use(express.json());
-
+app.get('/', (req, res) => {
+  res.send('<h1>Welcome to Super Lure</h1><p>Use POST /get-rates to get Canada Post rates.</p>');
+});
 // Canada Post credentials from Render environment
 const CUSTOMER_NUMBER = process.env.CP_CUSTOMER_NUMBER;
 const USERNAME = process.env.CP_USERNAME;
