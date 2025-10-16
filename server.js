@@ -1,18 +1,21 @@
 // server.js
-const CP_USERNAME = process.env.CP_USERNAME;
-const CP_PASSWORD = process.env.CP_PASSWORD;
-const CP_CUSTOMER_NUMBER = process.env.CP_CUSTOMER_NUMBER;
 const express = require('express');
 const axios = require('axios');
 const xml2js = require('xml2js');
 const cors = require('cors');
-app.use(cors()); // Add this near the top, after creating `app`
 
+// Create app first
 const app = express();
+
+// Middleware
+app.use(cors()); // allow cross-origin requests
 app.use(express.json());
+
+// Home page
 app.get('/', (req, res) => {
   res.send('<h1>Welcome to Super Lure</h1><p>Use POST /get-rates to get Canada Post rates.</p>');
 });
+
 // Canada Post credentials from Render environment
 const CUSTOMER_NUMBER = process.env.CP_CUSTOMER_NUMBER;
 const USERNAME = process.env.CP_USERNAME;
