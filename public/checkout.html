@@ -1,89 +1,78 @@
-<script>
-// --- CACHE DOM ELEMENTS ---
-const checkoutForm = document.getElementById('checkout-form');
-const step1 = document.getElementById('step1');
-const step2 = document.getElementById('step2');
-const cartSummary2El = document.getElementById('cart-summary-2');
-const countryEl = document.getElementById('country'); // <select id="country">
-const subdivisionEl = document.getElementById('subdivision'); // <select id="subdivision">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Super Lure Checkout</title>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
 
-// --- CART RENDER FUNCTION ---
-function renderCart(container) {
-  // Replace with your actual cart rendering logic
-  container.innerHTML = `
-    <p>Items: 3</p>
-    <p>Total: $14.14</p>
-  `;
-}
+<header>
+  <h1>Super Lure Checkout</h1>
+</header>
 
-// --- PAYPAL BUTTONS ---
-function renderPaypalButtons() {
-  paypal.Buttons({
-    createOrder: function(data, actions) {
-      return actions.order.create({
-        purchase_units: [{ amount: { value: '14.14' } }]
-      });
-    },
-    onApprove: function(data, actions) {
-      return actions.order.capture().then(function(details) {
-        alert('Transaction completed by ' + details.payer.name.given_name);
-      });
-    }
-  }).render('#paypal-buttons');
-}
+<section class="content">
 
-function loadPaypalAndRender() {
-  const script = document.createElement('script');
-  script.src = 'https://www.paypal.com/sdk/js?client-id=YOUR_CLIENT_ID';
-  script.onload = renderPaypalButtons;
-  document.head.appendChild(script);
-}
+  <!-- Step 1: Customer info -->
+  <div id="step1">
+    <h2>Order Summary</h2>
+    <div class="cart-summary" id="cart-summary"></div>
 
-// --- COUNTRY/SUBDIVISION LOGIC ---
-const subdivisions = {
-  "USA": ["Alabama","Alaska","California","New York","Texas"],
-  "Canada": ["Ontario","Quebec","British Columbia","Alberta"]
-};
+    <h2>Shipping & Billing Info</h2>
+    <form id="checkout-form" novalidate>
+      <label>Full Name <span class="required-star">*</span></label>
+      <input type="text" id="name" required>
 
-countryEl.addEventListener('change', () => {
-  const country = countryEl.value;
-  subdivisionEl.innerHTML = '';
-  
-  if (subdivisions[country]) {
-    subdivisionEl.disabled = false;
-    subdivisions[country].forEach(state => {
-      const option = document.createElement('option');
-      option.value = state;
-      option.textContent = state;
-      subdivisionEl.appendChild(option);
-    });
-  } else {
-    subdivisionEl.disabled = true;
-  }
-});
+      <label>Email <span class="required-star">*</span></label>
+      <input type="email" id="email" required pattern=".+\.com$" title="Email must end with .com">
 
-// --- FORM SUBMISSION ---
-checkoutForm.addEventListener('submit', function(e) {
-  e.preventDefault();
+      <div class="two-col" style="margin-top:10px;">
+        <div>
+          <label>Country <span class="required-star">*</span></label>
+          <select id="country" required></select>
+        </div>
+        <div>
+          <label>State / Province <span class="required-star">*</span></label>
+          <select id="subdivision" required>
+            <option value="">-- Select country first --</option>
+          </select>
+        </div>
+      </div>
 
-  // Check if subdivision is required
-  if (!subdivisionEl.disabled && !subdivisionEl.value) {
-    alert('Please select a state / province.');
-    return;
-  }
+      <label style="margin-top:12px;">Address <span class="required-star">*</span></label>
+      <input type="text" id="address" required>
 
-  // Move to step 2
-  step1.style.display = 'none';
-  step2.style.display = 'block';
+      <label>Postal / ZIP Code <span class="required-star">*</span></label>
+      <input type="text" id="postal" required>
 
-  // Render cart summary for step 2
-  renderCart(cartSummary2El);
+      <label>Phone <span class="required-star">*</span></label>
+      <div class="phone-container">
+        <select name="country_code" id="country_code" class="country-code" required></select>
+        <input type="tel" id="phone" placeholder="Phone number" required style="flex:1;"/>
+      </div>
 
-  // Render PayPal buttons
-  if (window.paypal) {
-    renderPaypalButtons();
-  } else {
-    loadPaypalAndRender();
-  }
-});
-</script>
+      <label>Additional Info</label>
+      <textarea id="additional" placeholder="Optional notes..."></textarea>
+
+      <div class="button-container">
+        <button type="button" id="exit-btn" style="background:#777;">Exit Checkout</button>
+        <button type="submit" id="to-payment">Continue to Payment</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Step 2: Payment -->
+  <div id="step2" style="display:none;">
+    <h2>Order Summary</h2>
+    <div class="cart-summary" id="cart-summary-2"></div>
+    <div id="paypal-button-container"></div>
+    <button id="back-btn">← Back to Info</button>
+  </div>
+
+</section>
+
+<script src="script.js"></script>
+</body>
+</html>
