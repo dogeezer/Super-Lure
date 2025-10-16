@@ -1,41 +1,30 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Checkout</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Super Lure Checkout</title>
+<script defer src="main.js"></script>
 </head>
 <body>
-  <h1>Checkout</h1>
-  <form id="checkoutForm">
-    <label>Full Name:</label><br>
-    <input type="text" id="name" required><br>
+<h1>Checkout</h1>
 
-    <label>Email:</label><br>
-    <input type="email" id="email" required><br>
+<form id="checkoutForm">
+  <input type="text" id="fullName" placeholder="Full Name" required /><br>
+  <input type="email" id="email" placeholder="Email" required /><br>
+  <input type="tel" id="phone" placeholder="Phone" required /><br>
+  <input type="text" id="address" placeholder="Address" required /><br>
+  <input type="text" id="postalCode" placeholder="Postal Code" required /><br>
+  <select id="country" required>
+    <option value="">Select Country</option>
+    <option value="CA">Canada</option>
+    <option value="US">United States</option>
+    <option value="GB">United Kingdom</option>
+    <option value="AU">Australia</option>
+  </select><br>
+  <button type="submit">Calculate Shipping</button>
+</form>
 
-    <label>Phone:</label><br>
-    <input type="tel" id="phone" required><br>
-
-    <label>Address:</label><br>
-    <input type="text" id="address" required><br>
-
-    <label>Postal Code:</label><br>
-    <input type="text" id="postalCode" required><br>
-
-    <label>Country:</label><br>
-    <select id="country" required>
-      <option value="">Select country</option>
-      <option value="CA">Canada</option>
-      <option value="US">United States</option>
-      <option value="GB">United Kingdom</option>
-      <option value="AU">Australia</option>
-    </select><br><br>
-
-    <button type="submit">Calculate Shipping</button>
-  </form>
-
-  <div id="shippingResult"></div>
-
-  <script src="main.js"></script>
+<div id="shippingResult"></div>
 </body>
 </html>
