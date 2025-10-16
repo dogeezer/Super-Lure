@@ -95,9 +95,9 @@ app.get('/test-rate', async (req, res) => {
     originPostal: 'N0B1M0',
     destPostal: 'L4B2B9',
     weight: 0.15,
-    length: 13,
-    width: 13,
-    height: 5
+    length: 15,
+    width: 5,
+    height: 10
   };
   return app._router.handle(req, res, () => {});
 });
