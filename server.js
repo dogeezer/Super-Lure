@@ -1,67 +1,67 @@
 // server.js
 import express from "express";
 import axios from "axios";
-import xml2js from "xml2js";
-import cors from "cors";
+import bodyParser from "body-parser";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
-app.use(cors());
-app.use(express.json());
-app.use(express.static("public")); // serve your HTML/JS/CSS
+app.use(bodyParser.json());
+app.use(express.static(path.join(__dirname, "public")));
 
-const CUSTOMER_NUMBER = process.env.CP_CUSTOMER_NUMBER;
-const USERNAME = process.env.CP_USERNAME;
-const PASSWORD = process.env.CP_PASSWORD;
-const ORIGIN_POSTAL = process.env.ORIGIN_POSTAL || "N0B1M0";
+const CANADA_POST_USER = "dff97199c141452c";
+const CANADA_POST_PASS = "50ac9a124b447a12304947";
+const ORIGIN_POSTAL_CODE = "N0B1M0";
 
-const API_URL = "https://ct.soa-gw.canadapost.ca/rs/ship/price";
-
-// --- API endpoint for checkout ---
+// Canada Post API: Get shipping rates
 app.post("/checkout/get-rates", async (req, res) => {
   try {
-    const { destPostal, weight = 0.015 } = req.body;
+    const { destinationPostalCode, country } = req.body;
 
-    if (!destPostal)
-      return res.status(400).json({ error: "Destination postal code required." });
+    if (!destinationPostalCode || !country) {
+      return res.status(400).json({ error: "Missing postal code or country" });
+    }
 
-    const xmlRequest = `
-      <mailing-scenario xmlns="http://www.canadapost.ca/ws/ship/rate-v4">
-        <customer-number>${CUSTOMER_NUMBER}</customer-number>
-        <parcel-characteristics>
-          <weight>${weight}</weight>
-        </parcel-characteristics>
-        <origin-postal-code>${ORIGIN_POSTAL}</origin-postal-code>
-        <destination>
-          <domestic>
-            <postal-code>${destPostal}</postal-code>
-          </domestic>
-        </destination>
-      </mailing-scenario>
-    `;
+    const xmlRequest = `<?xml version="1.0" encoding="UTF-8"?>
+<mailing-scenario xmlns="http://www.canadapost.ca/ws/ship/rate-v4">
+  <customer-number>${CANADA_POST_USER}</customer-number>
+  <parcel-characteristics>
+    <weight>0.015</weight>
+  </parcel-characteristics>
+  <origin-postal-code>${ORIGIN_POSTAL_CODE}</origin-postal-code>
+  <destination>
+    <country-code>${country}</country-code>
+    <postal-zip-code>${destinationPostalCode}</postal-zip-code>
+  </destination>
+</mailing-scenario>`;
 
-    const response = await axios.post(API_URL, xmlRequest, {
-      headers: {
-        "Content-Type": "application/vnd.cpc.ship.rate-v4+xml",
-        Accept: "application/vnd.cpc.ship.rate-v4+xml",
-      },
-      auth: { username: USERNAME, password: PASSWORD },
-    });
+    const response = await axios.post(
+      "https://ct.soa-gw.canadapost.ca/rs/ship/price",
+      xmlRequest,
+      {
+        headers: {
+          "Content-Type": "application/vnd.cpc.ship.rate-v4+xml",
+          Accept: "application/vnd.cpc.ship.rate-v4+xml",
+        },
+        auth: {
+          username: CANADA_POST_USER,
+          password: CANADA_POST_PASS,
+        },
+      }
+    );
 
-    xml2js.parseString(response.data, { explicitArray: false }, (err, result) => {
-      if (err) return res.status(500).json({ error: "XML Parse Error" });
-
-      const quotes = result["price-quotes"]["price-quote"];
-      const rates = (Array.isArray(quotes) ? quotes : [quotes]).map((q) => ({
-        service: q["service-name"],
-        price: q["price-details"]["due"],
-      }));
-
-      res.json({ status: "success", rates });
-    });
-  } catch (error) {
-    console.error("Canada Post Error:", error.message);
-    res.status(500).json({ status: "error", message: error.message });
+    res.type("application/xml").send(response.data);
+  } catch (err) {
+    console.error("Canada Post API Error:", err.message);
+    res.status(500).json({ error: "Failed to get rates" });
   }
+});
+
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "checkout.html"));
 });
 
 const PORT = process.env.PORT || 3000;
