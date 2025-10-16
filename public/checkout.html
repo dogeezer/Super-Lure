@@ -4,13 +4,24 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Super Lure Shipping</title>
+<style>
+  body { font-family:'Roboto', sans-serif; background:#f5f5f5; color:#333; padding:20px; max-width:800px; margin:auto; }
+  h1, h2 { color:#023e8a; }
+  #rates label { margin-left:5px; }
+  button { padding:10px 20px; background:#023e8a; color:white; border:none; border-radius:5px; cursor:pointer; margin-top:15px; }
+  button:hover { background:#002a5c; }
+</style>
 </head>
-  <p>Subtotal: <span id="checkout-subtotal">$0.00</span></p>
+<body>
+
+<h1>Select Shipping</h1>
+
+<p>Subtotal: <span id="checkout-subtotal">$0.00</span></p>
 <p>Shipping: <span id="checkout-shipping">$0.00</span></p>
 <p>Total: <span id="checkout-total">$0.00</span></p>
-<body>
-<h1>Select Shipping</h1>
-<div id="rates"></div>
+
+<div id="rates">Loading shipping rates...</div>
+
 <h2>Total: $<span id="total">0.00</span></h2>
 <button id="confirm">Confirm Order</button>
 
@@ -18,92 +29,89 @@
 const ratesDiv = document.getElementById('rates');
 const totalEl = document.getElementById('total');
 const confirmBtn = document.getElementById('confirm');
+const subtotalEl = document.getElementById('checkout-subtotal');
+const shippingEl = document.getElementById('checkout-shipping');
+const totalSummaryEl = document.getElementById('checkout-total');
 
-// Dummy product total
-const productTotal = 50.00;
+// Get cart and postal code from localStorage
+const cart = JSON.parse(localStorage.getItem('cart')) || [];
+const destPostal = localStorage.getItem('destPostal') || '';
 
-// Get destination postal from previous page
-const destPostal = sessionStorage.getItem('destPostal');
+let productTotal = 0;
+cart.forEach(item => productTotal += item.price * item.qty);
+subtotalEl.textContent = `$${productTotal.toFixed(2)}`;
+totalEl.textContent = `$${productTotal.toFixed(2)}`;
+totalSummaryEl.textContent = `$${productTotal.toFixed(2)}`;
 
+// Fetch shipping rates from server
 async function fetchRates() {
-  const response = await fetch('https://super-lure.onrender.com/get-rates', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      originPostal: 'N0B1M0',   // your warehouse/origin
-      destPostal: destPostal,
-      weight: 0.15,             // weight in kg
-      length: 15,
-      width: 5,
-      height: 10
-    })
-  });
-
-  const data = await response.json();
-
-  if(data.status === 'success') {
-    ratesDiv.innerHTML = '';
-    data.rates.forEach((rate, idx) => {
-      const radio = document.createElement('input');
-      radio.type = 'radio';
-      radio.name = 'shipping';
-      radio.value = rate.price;
-      radio.id = 'rate' + idx;
-      if(idx === 0) radio.checked = true;
-
-      const label = document.createElement('label');
-      label.htmlFor = radio.id;
-      label.textContent = `${rate.service}: $${rate.price}`;
-
-      const br = document.createElement('br');
-
-      ratesDiv.appendChild(radio);
-      ratesDiv.appendChild(label);
-      ratesDiv.appendChild(br);
+  try {
+    const response = await fetch('/get-rates', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        originPostal: 'N0B1M0',  // warehouse
+        destPostal,
+        weight: cart.reduce((sum, item) => sum + (item.qty * 0.15), 0), // total weight
+        length: 15,
+        width: 5,
+        height: 10
+      })
     });
 
-    updateTotal();
-    ratesDiv.addEventListener('change', updateTotal);
-  } else {
-    ratesDiv.textContent = 'Error fetching rates: ' + data.error;
+    const data = await response.json();
+
+    if(data.status === 'success') {
+      ratesDiv.innerHTML = '';
+      data.rates.forEach((rate, idx) => {
+        const radio = document.createElement('input');
+        radio.type = 'radio';
+        radio.name = 'shipping';
+        radio.value = rate.price;
+        radio.id = 'rate' + idx;
+        if(idx === 0) radio.checked = true;
+
+        const label = document.createElement('label');
+        label.htmlFor = radio.id;
+        label.textContent = `${rate.service}: $${rate.price}`;
+
+        const br = document.createElement('br');
+
+        ratesDiv.appendChild(radio);
+        ratesDiv.appendChild(label);
+        ratesDiv.appendChild(br);
+      });
+
+      ratesDiv.addEventListener('change', updateTotal);
+      updateTotal();
+    } else {
+      ratesDiv.textContent = 'Error fetching rates: ' + data.error;
+    }
+  } catch(err) {
+    ratesDiv.textContent = 'Error fetching rates: ' + err.message;
   }
 }
 
 function updateTotal() {
   const selected = document.querySelector('input[name="shipping"]:checked');
   const shipping = selected ? parseFloat(selected.value) : 0;
-  totalEl.textContent = (productTotal + shipping).toFixed(2);
+  shippingEl.textContent = `$${shipping.toFixed(2)}`;
+  const total = productTotal + shipping;
+  totalEl.textContent = total.toFixed(2);
+  totalSummaryEl.textContent = `$${total.toFixed(2)}`;
 }
 
+// Confirm order button
 confirmBtn.addEventListener('click', () => {
-  alert('Order confirmed! Total: $' + totalEl.textContent);
-  // Here you can add your real payment integration
+  const selected = document.querySelector('input[name="shipping"]:checked');
+  if(!selected) return alert('Please select a shipping method.');
+  alert(`Order confirmed!\nSubtotal: $${productTotal.toFixed(2)}\nShipping: $${parseFloat(selected.value).toFixed(2)}\nTotal: $${(productTotal + parseFloat(selected.value)).toFixed(2)}`);
+  // Here you can integrate payment or send order to server
 });
 
+// Load rates on page load
 fetchRates();
 </script>
-  <script>
-window.addEventListener('DOMContentLoaded', () => {
-  const cart = JSON.parse(localStorage.getItem('cart')) || [];
-  const destPostal = localStorage.getItem('destPostal') || '';
-  const subtotalEl = document.getElementById('checkout-subtotal');
-  const shippingEl = document.getElementById('checkout-shipping');
-  const totalEl = document.getElementById('checkout-total');
 
-  // Send cart to server to get shipping rates
-  fetch('/checkout/get-rates', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ cart, destPostal })
-  })
-  .then(res => res.json())
-  .then(data => {
-    subtotalEl.textContent = `$${data.subtotal.toFixed(2)}`;
-    shippingEl.textContent = `$${data.shipping.toFixed(2)}`;
-    totalEl.textContent = `$${data.total.toFixed(2)}`;
-  })
-  .catch(err => console.error(err));
-});
-</script>
 </body>
 </html>
