@@ -1,26 +1,24 @@
 import express from "express";
 import axios from "axios";
-import bodyParser from "body-parser";
 import path from "path";
 import { fileURLToPath } from "url";
-import cors from "cors";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-app.use(cors());
-app.use(bodyParser.json());
+app.use(express.json()); // parse JSON body
 app.use(express.static(path.join(__dirname, "public")));
 
 const CANADA_POST_USER = "dff97199c141452c";
 const CANADA_POST_PASS = "50ac9a124b447a12304947";
 const ORIGIN_POSTAL_CODE = "N0B1M0";
 
-// Endpoint for Canada Post shipping rates
-app.post("/get-rates", async (req, res) => {
+// POST /checkout/get-rates
+app.post("/checkout/get-rates", async (req, res) => {
   try {
     const { destinationPostalCode, country } = req.body;
+
     if (!destinationPostalCode || !country) {
       return res.status(400).json({ error: "Missing postal code or country" });
     }
