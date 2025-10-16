@@ -3,7 +3,33 @@ const express = require('express');
 const axios = require('axios');
 const xml2js = require('xml2js');
 const cors = require('cors');
+// server.js (or app.js)
 
+// 1. Import express
+const express = require('express');
+const app = express();
+
+// 2. Middleware to parse JSON
+app.use(express.json()); // allows your server to read POST JSON
+
+// 3. Serve static files (your HTML, CSS, JS)
+app.use(express.static('public')); // <-- put your index.html, checkout.html, and JS in a folder called 'public'
+
+// 4. POST route for shipping rates
+app.post('/checkout/get-rates', (req, res) => {
+  const { cart, destPostal } = req.body;
+
+  // Example calculation (replace with your real shipping API later)
+  const subtotal = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
+  const shipping = cart.reduce((sum, item) => sum + item.qty * 1.28, 0); // $1.28 per item
+  const total = subtotal + shipping;
+
+  res.json({ subtotal, shipping, total });
+});
+
+// 5. Start the server
+const PORT = 3000;
+app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
 // Create app
 const app = express();
 
