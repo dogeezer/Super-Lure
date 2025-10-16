@@ -5,6 +5,8 @@ const CP_CUSTOMER_NUMBER = process.env.CP_CUSTOMER_NUMBER;
 const express = require('express');
 const axios = require('axios');
 const xml2js = require('xml2js');
+const cors = require('cors');
+app.use(cors()); // Add this near the top, after creating `app`
 
 const app = express();
 app.use(express.json());
