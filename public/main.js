@@ -1,21 +1,27 @@
-document.getElementById("calculate").addEventListener("click", async () => {
-  const postalCode = document.getElementById("postalCode").value;
+document.getElementById("checkoutForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  const postalCode = document.getElementById("postalCode").value.trim();
   const country = document.getElementById("country").value;
-  const resultDiv = document.getElementById("shipping-result");
-  resultDiv.innerHTML = "Calculating...";
+
+  if (!postalCode || !country) {
+    document.getElementById("shippingResult").innerText = "Please enter postal code and country.";
+    return;
+  }
 
   try {
-    const response = await fetch("/get-rates", {
+    const response = await fetch("/checkout/get-rates", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ destinationPostalCode: postalCode, country }),
     });
 
-    if (!response.ok) throw new Error("Failed to get rates");
+    if (!response.ok) throw new Error("Error calculating shipping.");
+
     const text = await response.text();
-    resultDiv.innerHTML = `<pre>${text}</pre>`;
+    document.getElementById("shippingResult").innerText = "Shipping rate response:\n" + text;
   } catch (err) {
-    resultDiv.innerHTML = "Error calculating shipping.";
     console.error(err);
+    document.getElementById("shippingResult").innerText = "Error calculating shipping.";
   }
 });
