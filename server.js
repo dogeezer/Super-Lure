@@ -10,7 +10,7 @@ const app = express();
 // Middleware
 app.use(cors());           // allow cross-origin requests
 app.use(express.json());   // parse JSON request bodies
-
+app.use(express.static('public'));
 // Home page
 app.get('/', (req, res) => {
   res.send('<h1>Welcome to Super Lure Sandbox</h1><p>Use POST /get-rates to get Canada Post sandbox rates.</p>');
