@@ -15,8 +15,8 @@ app.post('/calculate-shipping', async (req, res) => {
   const { postalCode, country, weight } = req.body;
   
   // Replace with your Canada Post credentials
-  const CANADA_POST_USER = 'YOUR_USERNAME';
-  const CANADA_POST_PASS = 'YOUR_PASSWORD';
+  const CANADA_POST_USER = 'dff97199c141452c';
+  const CANADA_POST_PASS = '50ac9a124b447a12304947';
   
   const originPostal = 'N0B1M0'; // your origin
   const destinationPostal = postalCode;
