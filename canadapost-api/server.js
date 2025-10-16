@@ -1,4 +1,7 @@
 // server.js
+const CP_USERNAME = process.env.CP_USERNAME;
+const CP_PASSWORD = process.env.CP_PASSWORD;
+const CP_CUSTOMER_NUMBER = process.env.CP_CUSTOMER_NUMBER;
 const express = require('express');
 const axios = require('axios');
 const xml2js = require('xml2js');
