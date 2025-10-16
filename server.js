@@ -8,33 +8,30 @@ const cors = require('cors');
 const app = express();
 
 // Middleware
-app.use(cors());           // allow cross-origin requests
-app.use(express.json());   // parse JSON request bodies
+app.use(cors());
+app.use(express.json());
 
 // Home page
 app.get('/', (req, res) => {
   res.send('<h1>Welcome to Super Lure Sandbox</h1><p>Use POST /get-rates to get Canada Post sandbox rates.</p>');
 });
-app.get('/debug', (req, res) => {
-  res.json({
-    CUSTOMER_NUMBER,
-    USERNAME,
-    PASSWORD: PASSWORD ? '***set***' : '***missing***'
-  });
-});
 
-// Canada Post sandbox credentials from Render secrets
-const CUSTOMER_NUMBER = process.env.CP_CUSTOMER_NUMBER; // sandbox customer number
-const USERNAME = process.env.CP_USERNAME;               // sandbox username
-const PASSWORD = process.env.CP_PASSWORD;               // sandbox password
+// Canada Post sandbox credentials from environment variables
+const CUSTOMER_NUMBER = process.env.CP_CUSTOMER_NUMBER; // Sandbox customer number
+const USERNAME = process.env.CP_USERNAME;               // Sandbox API username
+const PASSWORD = process.env.CP_PASSWORD;               // Sandbox API password
 
 // Sandbox API URL
 const API_URL = 'https://ct.soa-gw.canadapost.ca/rs/ship/price';
 
-// Endpoint to get rates
+// Endpoint to get Canada Post rates
 app.post('/get-rates', async (req, res) => {
   try {
     const { originPostal, destPostal, weight, length, width, height } = req.body;
+
+    if (!originPostal || !destPostal || !weight || !length || !width || !height) {
+      return res.json({ status: 'error', error: 'Missing required fields in request body' });
+    }
 
     // Build XML request
     const xmlRequest = `
@@ -90,6 +87,19 @@ app.post('/get-rates', async (req, res) => {
   } catch (e) {
     res.json({ status: 'error', error: e.message });
   }
+});
+
+// Optional test endpoint for quick sandbox check
+app.get('/test-rate', async (req, res) => {
+  req.body = {
+    originPostal: 'L4L9BK',
+    destPostal: 'L4B2B9',
+    weight: 1,
+    length: 13,
+    width: 13,
+    height: 5
+  };
+  return app._router.handle(req, res, () => {});
 });
 
 // Start server
