@@ -1,62 +1,7 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Super Lure Checkout</title>
-</head>
-<body style="font-family: sans-serif; margin: 30px;">
-  <h2>Super Lure Checkout</h2>
-  <label>Enter your postal code:</label><br />
-  <input type="text" id="postal" placeholder="e.g. K1A0B1" /><br /><br />
+<button id="proceedBtn">Proceed to Checkout</button>
 
-  <button id="getRates">Get Shipping Rates</button>
-
-  <h3>Shipping Options</h3>
-  <div id="results"></div>
-
-  <script>
-    document.getElementById("getRates").addEventListener("click", async () => {
-      const postal = document.getElementById("postal").value.trim();
-      const resultsDiv = document.getElementById("results");
-      resultsDiv.innerHTML = "Loading...";
-
-      try {
-        const res = await fetch("/api/canadapost-rate", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            postal,
-            country: "CA",
-            weight: 0.015,  // 15g
-            length: 15,
-            width: 5,
-            height: 10
-          })
-        });
-
-        const data = await res.json();
-
-        if (!res.ok) {
-          resultsDiv.innerHTML = `<p style="color:red;">Error: ${data.error || "Failed to get rates"}</p>`;
-          if (data.details) console.error(data.details);
-          return;
-        }
-
-        if (!data.rates || data.rates.length === 0) {
-          resultsDiv.innerHTML = "No rates found.";
-          return;
-        }
-
-        resultsDiv.innerHTML = data.rates
-          .map(r => `<p><strong>${r.name}</strong>: $${r.price.toFixed(2)}</p>`)
-          .join("");
-
-      } catch (err) {
-        console.error(err);
-        resultsDiv.innerHTML = "<p style='color:red;'>Network or server error.</p>";
-      }
-    });
-  </script>
-</body>
-</html>
+<script>
+  document.getElementById('proceedBtn').addEventListener('click', () => {
+    window.location.href = '/checkout';  // sends user to page 2
+  });
+</script>
