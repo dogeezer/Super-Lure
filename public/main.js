@@ -19,7 +19,7 @@ document.getElementById("checkoutForm").addEventListener("submit", async (e) => 
     if (!response.ok) throw new Error("Error calculating shipping.");
 
     const text = await response.text();
-    document.getElementById("shippingResult").innerText = "Shipping rate response:\n" + text;
+    document.getElementById("shippingResult").innerText = text;
   } catch (err) {
     console.error(err);
     document.getElementById("shippingResult").innerText = "Error calculating shipping.";
