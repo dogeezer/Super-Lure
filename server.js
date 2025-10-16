@@ -15,6 +15,13 @@ app.use(express.json());   // parse JSON request bodies
 app.get('/', (req, res) => {
   res.send('<h1>Welcome to Super Lure Sandbox</h1><p>Use POST /get-rates to get Canada Post sandbox rates.</p>');
 });
+app.get('/debug', (req, res) => {
+  res.json({
+    CUSTOMER_NUMBER,
+    USERNAME,
+    PASSWORD: PASSWORD ? '***set***' : '***missing***'
+  });
+});
 
 // Canada Post sandbox credentials from Render secrets
 const CUSTOMER_NUMBER = process.env.CP_CUSTOMER_NUMBER; // sandbox customer number
