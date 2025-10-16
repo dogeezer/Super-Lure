@@ -22,7 +22,7 @@ const USERNAME = process.env.CP_USERNAME;               // sandbox username
 const PASSWORD = process.env.CP_PASSWORD;               // sandbox password
 
 // Sandbox API URL
-const API_URL = 'https://ct.soa-gw.canadapost.ca/rs/ship/price';
+const API_URL = ''https:/ct.soa-gw.canadapost.ca/rs/ship/price';
 
 // Endpoint to get rates
 app.post('/get-rates', async (req, res) => {
