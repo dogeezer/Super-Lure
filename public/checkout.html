@@ -9,12 +9,15 @@ let cart = JSON.parse(localStorage.getItem('cart')) || [];
    ------------------------- */
 const cartSummaryEl = document.getElementById('cart-summary');
 const cartSummary2El = document.getElementById('cart-summary-2');
+const step1 = document.getElementById('step1');
+const step2 = document.getElementById('step2');
+const checkoutForm = document.getElementById('checkout-form');
 
 /* -------------------------
    SHIPPING API INTEGRATION
    ------------------------- */
 let shippingRates = [];
-let selectedShipping = null;
+let selectedShipping = { service: 'Standard', price: 0 };
 
 // Example fetch function (replace URL with your real API endpoint)
 async function fetchShippingRates(){
@@ -31,12 +34,14 @@ async function fetchShippingRates(){
     const data = await response.json();
     shippingRates = data.rates || [];
     selectedShipping = shippingRates[0] || { service: 'Standard', price: 0 };
-    renderCartWithShipping();
+    renderCartWithShipping(cartSummaryEl);
+    renderCartWithShipping(cartSummary2El);
   } catch(err){
     console.error('Shipping API error', err);
     shippingRates = [];
     selectedShipping = { service: 'Standard', price: 0 };
-    renderCartWithShipping();
+    renderCartWithShipping(cartSummaryEl);
+    renderCartWithShipping(cartSummary2El);
   }
 }
 
@@ -48,6 +53,7 @@ function calcSubtotal(){
 }
 
 function renderCartWithShipping(el=cartSummaryEl){
+  if(!el) return;
   el.innerHTML = '';
 
   if(!cart.length){
@@ -64,7 +70,7 @@ function renderCartWithShipping(el=cartSummaryEl){
   });
 
   const subtotal = calcSubtotal();
-  const shippingCost = selectedShipping ? parseFloat(selectedShipping.price) : 0;
+  const shippingCost = selectedShipping?.price ? parseFloat(selectedShipping.price) : 0;
   const total = subtotal + shippingCost;
 
   // Shipping selector
@@ -101,10 +107,34 @@ function renderCartWithShipping(el=cartSummaryEl){
     el.appendChild(ln);
   });
 
-  // store current totals for PayPal
+  // store current totals for Step 2
   el.dataset.subtotal=subtotal.toFixed(2);
   el.dataset.shipping=shippingCost.toFixed(2);
   el.dataset.total=total.toFixed(2);
+}
+
+/* -------------------------
+   CHECKOUT FORM
+   ------------------------- */
+if(checkoutForm){
+  checkoutForm.addEventListener('submit', e=>{
+    e.preventDefault();
+    // switch to Step 2
+    if(step1) step1.style.display='none';
+    if(step2) step2.style.display='block';
+    renderCartWithShipping(cartSummary2El);
+  });
+}
+
+/* -------------------------
+   BACK BUTTON
+   ------------------------- */
+const backBtn = document.getElementById('back-btn');
+if(backBtn){
+  backBtn.addEventListener('click', ()=>{
+    if(step2) step2.style.display='none';
+    if(step1) step1.style.display='block';
+  });
 }
 
 /* -------------------------
