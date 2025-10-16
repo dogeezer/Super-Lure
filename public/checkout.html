@@ -1,30 +1,42 @@
-document.getElementById("checkoutForm").addEventListener("submit", async (e) => {
-  e.preventDefault();
+app.post("/checkout/get-rates", async (req, res) => {
+  const { destinationPostalCode, country } = req.body;
 
-  const postalCode = document.getElementById("postalCode").value.trim();
-  const country = document.getElementById("country").value;
-
-  if (!postalCode || !country) {
-    document.getElementById("shippingResult").innerText = "Please enter postal code and country.";
-    return;
+  if (!destinationPostalCode || !country) {
+    return res.status(400).json({ error: "Missing postal code or country" });
   }
 
+  const xmlRequest = `<?xml version="1.0" encoding="UTF-8"?>
+<mailing-scenario xmlns="http://www.canadapost.ca/ws/ship/rate-v4">
+  <customer-number>${process.env.CPC_USER}</customer-number>
+  <parcel-characteristics>
+    <weight>0.015</weight>
+  </parcel-characteristics>
+  <origin-postal-code>N0B1M0</origin-postal-code>
+  <destination>
+    <country-code>${country}</country-code>
+    <postal-zip-code>${destinationPostalCode}</postal-zip-code>
+  </destination>
+</mailing-scenario>`;
+
   try {
-    const response = await fetch("/checkout/get-rates", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ destinationPostalCode: postalCode, country }),
-    });
+    const response = await axios.post(
+      "https://ct.soa-gw.canadapost.ca/rs/ship/price",
+      xmlRequest,
+      {
+        headers: {
+          "Content-Type": "application/vnd.cpc.ship.rate-v4+xml",
+          Accept: "application/vnd.cpc.ship.rate-v4+xml",
+        },
+        auth: {
+          username: process.env.CPC_USER,
+          password: process.env.CPC_PASS,
+        },
+      }
+    );
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || "Error calculating shipping.");
-    }
-
-    const text = await response.text();
-    document.getElementById("shippingResult").innerText = "Shipping rate response:\n" + text;
+    res.type("application/xml").send(response.data);
   } catch (err) {
-    console.error(err);
-    document.getElementById("shippingResult").innerText = "Error calculating shipping.";
+    console.error("Canada Post API Error:", err.message);
+    res.status(500).json({ error: "Failed to get rates" });
   }
 });
