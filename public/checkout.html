@@ -79,5 +79,28 @@ confirmBtn.addEventListener('click', () => {
 
 fetchRates();
 </script>
+  <script>
+window.addEventListener('DOMContentLoaded', () => {
+  const cart = JSON.parse(localStorage.getItem('cart')) || [];
+  const destPostal = localStorage.getItem('destPostal') || '';
+  const subtotalEl = document.getElementById('checkout-subtotal');
+  const shippingEl = document.getElementById('checkout-shipping');
+  const totalEl = document.getElementById('checkout-total');
+
+  // Send cart to server to get shipping rates
+  fetch('/checkout/get-rates', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ cart, destPostal })
+  })
+  .then(res => res.json())
+  .then(data => {
+    subtotalEl.textContent = `$${data.subtotal.toFixed(2)}`;
+    shippingEl.textContent = `$${data.shipping.toFixed(2)}`;
+    totalEl.textContent = `$${data.total.toFixed(2)}`;
+  })
+  .catch(err => console.error(err));
+});
+</script>
 </body>
 </html>
