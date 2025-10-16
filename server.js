@@ -8,8 +8,8 @@ const cors = require('cors');
 const app = express();
 
 // Middleware
-app.use(cors());
-app.use(express.json());
+app.use(cors());           // allow cross-origin requests
+app.use(express.json());   // parse JSON request bodies
 
 // Home page
 app.get('/', (req, res) => {
@@ -27,11 +27,15 @@ const API_URL = 'https://ct.soa-gw.canadapost.ca/rs/ship/price';
 // Endpoint to get Canada Post rates
 app.post('/get-rates', async (req, res) => {
   try {
-    const { originPostal, destPostal, weight, length, width, height } = req.body;
-
-    if (!originPostal || !destPostal || !weight || !length || !width || !height) {
-      return res.json({ status: 'error', error: 'Missing required fields in request body' });
-    }
+    // Use request body or fallback defaults
+    const {
+      originPostal = 'N0B1M0',
+      destPostal = 'L4B2B9',
+      weight = 0.15,
+      length = 15,
+      width = 5,
+      height = 10
+    } = req.body || {};
 
     // Build XML request
     const xmlRequest = `
@@ -87,19 +91,6 @@ app.post('/get-rates', async (req, res) => {
   } catch (e) {
     res.json({ status: 'error', error: e.message });
   }
-});
-
-// Optional test endpoint for quick sandbox check
-app.get('/test-rate', async (req, res) => {
-  req.body = {
-    originPostal: 'N0B1M0',
-    destPostal: 'L4B2B9',
-    weight: 0.15,
-    length: 15,
-    width: 5,
-    height: 10
-  };
-  return app._router.handle(req, res, () => {});
 });
 
 // Start server
