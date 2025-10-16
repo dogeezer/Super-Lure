@@ -1,77 +1,54 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Super Lure Checkout</title>
-<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Checkout</title>
 <style>
-  body { font-family:'Roboto', sans-serif; margin:0; padding:0; background:#f5f5f5; }
-  .container { max-width:600px; margin:50px auto; background:#fff; padding:20px; border-radius:8px; }
-  label { display:block; margin:10px 0 5px; }
-  input, select, button { width:100%; padding:10px; margin-bottom:15px; }
+  body { font-family: Arial, sans-serif; max-width: 500px; margin: 30px auto; }
+  input, select, button { width: 100%; margin: 5px 0; padding: 10px; }
 </style>
 </head>
 <body>
-<div class="container">
-  <h1>Checkout</h1>
-  <form id="checkout-form">
-    <label>Name:
-      <input type="text" id="name" required>
-    </label>
-    <label>Email:
-      <input type="email" id="email" required>
-    </label>
-    <label>Phone Number:
-      <input type="tel" id="phone" required>
-    </label>
-    <label>Address:
-      <input type="text" id="address" required>
-    </label>
-    <label>Postal Code:
-      <input type="text" id="postal" required>
-    </label>
-    <label>Country:
-      <select id="country" required>
-        <option value="CA" selected>Canada</option>
-        <option value="US">United States</option>
-        <option value="GB">United Kingdom</option>
-        <option value="AU">Australia</option>
-        <option value="FR">France</option>
-        <!-- Add more countries here -->
-      </select>
-    </label>
-    <label>Package Weight (kg):
-      <input type="number" id="weight" value="1" min="0.01" step="0.01">
-    </label>
-    <button type="submit">Calculate Shipping</button>
-  </form>
-  <div id="result"></div>
-</div>
+<h2>Checkout</h2>
+<form id="checkoutForm">
+  <input type="text" id="name" placeholder="Full Name" required />
+  <input type="email" id="email" placeholder="Email" required />
+  <input type="text" id="address" placeholder="Address" required />
+  <input type="text" id="phone" placeholder="Phone Number" required />
+  <input type="text" id="postal" placeholder="Postal Code" required />
+  <select id="country">
+    <option value="CA">Canada</option>
+    <option value="US">United States</option>
+    <option value="GB">United Kingdom</option>
+    <option value="AU">Australia</option>
+    <!-- add more countries as needed -->
+  </select>
+  <input type="number" id="weight" placeholder="Package weight (kg)" required />
+  <button type="submit">Calculate Shipping</button>
+</form>
+
+<div id="results"></div>
 
 <script>
-const form = document.getElementById('checkout-form');
-const resultDiv = document.getElementById('result');
+const form = document.getElementById('checkoutForm');
+const results = document.getElementById('results');
 
-form.addEventListener('submit', async e => {
+form.addEventListener('submit', async (e) => {
   e.preventDefault();
-
   const postalCode = document.getElementById('postal').value;
   const country = document.getElementById('country').value;
-  const weight = parseFloat(document.getElementById('weight').value);
+  const weight = document.getElementById('weight').value;
 
-  const res = await fetch('/calculate-shipping', {
+  const response = await fetch('/calculate-shipping', {
     method: 'POST',
-    headers: {'Content-Type': 'application/json'},
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ postalCode, country, weight })
   });
-  const data = await res.json();
 
-  if (data.error) {
-    resultDiv.innerHTML = `<span style="color:red">${data.error}</span>`;
-  } else {
-    resultDiv.innerHTML = `Shipping cost: $${data.shipping}`;
-  }
+  const data = await response.json();
+  results.innerHTML = '<h3>Shipping Rates:</h3>' + 
+    data.rates.map(r => `<p>${r.service}: $${r.price}</p>`).join('');
 });
 </script>
 </body>
