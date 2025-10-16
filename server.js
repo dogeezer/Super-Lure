@@ -1,82 +1,63 @@
-import express from 'express';
-import path from 'path';
-import { fileURLToPath } from 'url';
-import https from 'https';
-import xml2js from 'xml2js';
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Checkout</title>
+<style>
+  body { font-family: Arial, sans-serif; max-width: 500px; margin: 30px auto; }
+  input, select, button { width: 100%; margin: 5px 0; padding: 10px; }
+</style>
+</head>
+<body>
+<h2>Checkout</h2>
+<form id="checkoutForm">
+  <input type="text" id="name" placeholder="Full Name" required />
+  <input type="email" id="email" placeholder="Email" required />
+  <input type="text" id="address" placeholder="Address" required />
+  <input type="text" id="phone" placeholder="Phone Number" required />
+  <input type="text" id="postal" placeholder="Postal Code" required />
+  <select id="country">
+    <option value="CA">Canada</option>
+    <option value="US">United States</option>
+    <option value="GB">United Kingdom</option>
+    <option value="AU">Australia</option>
+    <option value="FR">France</option>
+    <option value="DE">Germany</option>
+    <option value="JP">Japan</option>
+  </select>
+  <input type="number" id="weight" placeholder="Package weight (kg)" required />
+  <button type="submit">Calculate Shipping</button>
+</form>
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const app = express();
+<div id="results"></div>
 
-app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
+<script>
+const form = document.getElementById('checkoutForm');
+const results = document.getElementById('results');
 
-const CP_USER = 'YOUR_CANADAPOST_USERNAME';
-const CP_PASS = 'YOUR_CANADAPOST_PASSWORD';
-const ORIGIN_POSTAL = 'N0B1M0';
+form.addEventListener('submit', async e => {
+  e.preventDefault();
+  results.textContent = 'Calculating...';
 
-// Canada Post API endpoint
-const CP_HOST = 'ct.soa-gw.canadapost.ca'; // sandbox; prod is 'soa-gw.canadapost.ca'
+  const postalCode = document.getElementById('postal').value;
+  const country = document.getElementById('country').value;
+  const weight = document.getElementById('weight').value;
 
-app.post('/calculate-shipping', async (req, res) => {
-  const { postalCode, country, weight } = req.body;
-
-  const xml = `
-  <mailing-scenario xmlns="http://www.canadapost.ca/ws/ship/rate-v4">
-    <customer-number>${CP_USER}</customer-number>
-    <parcel-characteristics>
-      <weight>${weight}</weight>
-    </parcel-characteristics>
-    <origin-postal-code>${ORIGIN_POSTAL}</origin-postal-code>
-    <destination>
-      ${country.toUpperCase() === 'CA'
-        ? `<domestic><postal-code>${postalCode}</postal-code></domestic>`
-        : `<international><country-code>${country}</country-code></international>`}
-    </destination>
-  </mailing-scenario>`;
-
-  const options = {
-    hostname: CP_HOST,
-    path: '/rs/ship/price',
+  const res = await fetch('/calculate-shipping', {
     method: 'POST',
-    auth: `${CP_USER}:${CP_PASS}`,
-    headers: {
-      'Content-Type': 'application/vnd.cpc.ship.rate-v4+xml',
-      'Accept': 'application/vnd.cpc.ship.rate-v4+xml'
-    }
-  };
-
-  const request = https.request(options, response => {
-    let data = '';
-    response.on('data', chunk => data += chunk);
-    response.on('end', async () => {
-      try {
-        const parsed = await xml2js.parseStringPromise(data);
-        const quotes = parsed['price-quotes']?.['price-quote'] || [];
-        const rates = quotes.map(pq => ({
-          service: pq['service-code']?.[0],
-          price: pq['price-details']?.[0]['due']?.[0]?._ || 'N/A'
-        }));
-        res.json({ rates });
-      } catch (err) {
-        console.error('Parse error:', err);
-        res.status(500).json({ error: 'Failed to parse Canada Post response' });
-      }
-    });
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ postalCode, country, weight })
   });
 
-  request.on('error', err => {
-    console.error('Canada Post request failed:', err);
-    res.status(500).json({ error: 'Failed to contact Canada Post' });
-  });
-
-  request.write(xml);
-  request.end();
+  const data = await res.json();
+  if (data.error) {
+    results.innerHTML = `<p style="color:red;">${data.error}</p>`;
+  } else {
+    results.innerHTML = '<h3>Shipping Rates</h3>' + 
+      data.rates.map(r => `<p>${r.service}: $${r.price}</p>`).join('');
+  }
 });
-
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'checkout.html'));
-});
-
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`✅ Server running on port ${PORT}`));
+</script>
+</body>
+</html>
