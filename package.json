@@ -7,8 +7,7 @@
     "start": "node canadapost_test.cjs"
   },
   "dependencies": {
-    "dotenv": "^16.0.0"
-  "lodash.kebabcase": "^4.1.0"
-}
+    "dotenv": "^16.0.0",
+    "lodash.kebabcase": "^4.1.0"
   }
 }
