@@ -28,8 +28,6 @@ app.post('/checkout/get-rates', (req, res) => {
 // 5. Start the server
 const PORT = 3000;
 app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
-// Create app
-const app = express();
 
 // Middleware
 app.use(cors());           // allow cross-origin requests
