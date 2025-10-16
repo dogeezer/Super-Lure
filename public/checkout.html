@@ -1,1 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Super Lure Shipping</title>
+</head>
+<body>
+<h1>Select Shipping</h1>
+<div id="rates"></div>
+<h2>Total: $<span id="total">0.00</span></h2>
+<button id="confirm">Confirm Order</button>
 
+<script>
+const ratesDiv = document.getElementById('rates');
+const totalEl = document.getElementById('total');
+const confirmBtn = document.getElementById('confirm');
+
+// Dummy product total
+const productTotal = 50.00;
+
+// Get destination postal from previous page
+const destPostal = sessionStorage.getItem('destPostal');
+
+async function fetchRates() {
+  const response = await fetch('https://super-lure.onrender.com/get-rates', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      originPostal: 'N0B1M0',   // your warehouse/origin
+      destPostal: destPostal,
+      weight: 0.15,             // weight in kg
+      length: 15,
+      width: 5,
+      height: 10
+    })
+  });
+
+  const data = await response.json();
+
+  if(data.status === 'success') {
+    ratesDiv.innerHTML = '';
+    data.rates.forEach((rate, idx) => {
+      const radio = document.createElement('input');
+      radio.type = 'radio';
+      radio.name = 'shipping';
+      radio.value = rate.price;
+      radio.id = 'rate' + idx;
+      if(idx === 0) radio.checked = true;
+
+      const label = document.createElement('label');
+      label.htmlFor = radio.id;
+      label.textContent = `${rate.service}: $${rate.price}`;
+
+      const br = document.createElement('br');
+
+      ratesDiv.appendChild(radio);
+      ratesDiv.appendChild(label);
+      ratesDiv.appendChild(br);
+    });
+
+    updateTotal();
+    ratesDiv.addEventListener('change', updateTotal);
+  } else {
+    ratesDiv.textContent = 'Error fetching rates: ' + data.error;
+  }
+}
+
+function updateTotal() {
+  const selected = document.querySelector('input[name="shipping"]:checked');
+  const shipping = selected ? parseFloat(selected.value) : 0;
+  totalEl.textContent = (productTotal + shipping).toFixed(2);
+}
+
+confirmBtn.addEventListener('click', () => {
+  alert('Order confirmed! Total: $' + totalEl.textContent);
+  // Here you can add your real payment integration
+});
+
+fetchRates();
+</script>
+</body>
+</html>
