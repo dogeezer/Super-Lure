@@ -8,8 +8,8 @@ const cors = require('cors');
 const app = express();
 
 // Middleware
-app.use(cors());
-app.use(express.json());
+app.use(cors());           // allow cross-origin requests
+app.use(express.json());   // parse JSON request bodies
 
 // Home page
 app.get('/', (req, res) => {
@@ -22,7 +22,7 @@ const USERNAME = process.env.CP_USERNAME;               // sandbox username
 const PASSWORD = process.env.CP_PASSWORD;               // sandbox password
 
 // Sandbox API URL
-const API_URL = ''https:/ct.soa-gw.canadapost.ca/rs/ship/price';
+const API_URL = 'https://ct.soa-gw.canadapost.ca/rs/ship/price';
 
 // Endpoint to get rates
 app.post('/get-rates', async (req, res) => {
