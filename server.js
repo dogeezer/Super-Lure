@@ -4,24 +4,27 @@ const axios = require('axios');
 const xml2js = require('xml2js');
 const cors = require('cors');
 
-// Create app first
+// Create app
 const app = express();
 
 // Middleware
-app.use(cors()); // allow cross-origin requests
+app.use(cors());
 app.use(express.json());
 
 // Home page
 app.get('/', (req, res) => {
-  res.send('<h1>Welcome to Super Lure</h1><p>Use POST /get-rates to get Canada Post rates.</p>');
+  res.send('<h1>Welcome to Super Lure Sandbox</h1><p>Use POST /get-rates to get Canada Post sandbox rates.</p>');
 });
 
-// Canada Post credentials from Render environment
-const CUSTOMER_NUMBER = process.env.CP_CUSTOMER_NUMBER;
-const USERNAME = process.env.CP_USERNAME;
-const PASSWORD = process.env.CP_PASSWORD;
+// Canada Post sandbox credentials from Render secrets
+const CUSTOMER_NUMBER = process.env.CP_CUSTOMER_NUMBER; // sandbox customer number
+const USERNAME = process.env.CP_USERNAME;               // sandbox username
+const PASSWORD = process.env.CP_PASSWORD;               // sandbox password
 
-// Example endpoint: /get-rates
+// Sandbox API URL
+const API_URL = 'https://ct.soa-gw.canadapost.ca/rs/ship/price';
+
+// Endpoint to get rates
 app.post('/get-rates', async (req, res) => {
   try {
     const { originPostal, destPostal, weight, length, width, height } = req.body;
@@ -47,20 +50,17 @@ app.post('/get-rates', async (req, res) => {
       </mailing-scenario>
     `;
 
-    const response = await axios.post(
-      'https://soa-gw.canadapost.ca/rs/ship/price',
-      xmlRequest,
-      {
-        headers: {
-          'Content-Type': 'application/vnd.cpc.ship.rate-v4+xml',
-          Accept: 'application/vnd.cpc.ship.rate-v4+xml',
-        },
-        auth: {
-          username: USERNAME,
-          password: PASSWORD,
-        },
-      }
-    );
+    // Send request to Canada Post sandbox
+    const response = await axios.post(API_URL, xmlRequest, {
+      headers: {
+        'Content-Type': 'application/vnd.cpc.ship.rate-v4+xml',
+        Accept: 'application/vnd.cpc.ship.rate-v4+xml',
+      },
+      auth: {
+        username: USERNAME,
+        password: PASSWORD,
+      },
+    });
 
     // Parse XML to JSON
     xml2js.parseString(response.data, { explicitArray: false }, (err, result) => {
@@ -85,5 +85,6 @@ app.post('/get-rates', async (req, res) => {
   }
 });
 
+// Start server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
