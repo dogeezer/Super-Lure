@@ -7,87 +7,254 @@
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 <style>
-  body { font-family:'Roboto', sans-serif; margin:0; padding:0; background:#f5f5f5; color:#333; }
-  header { background:#000; color:white; padding:20px; text-align:center; }
-  h1 { margin:0; }
-  .product-list { display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:20px; max-width:1000px; margin:30px auto; }
-  .product { background:white; border-radius:10px; padding:15px; text-align:center; box-shadow:0 4px 12px rgba(0,0,0,0.08); }
-  .product img { width:100%; border-radius:10px; }
-  .product-name { font-weight:700; margin:10px 0 5px; }
-  .product-price { color:#3B5998; font-weight:700; margin-bottom:10px; }
-  button { padding:8px 14px; background:#3B5998; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:bold; }
-  button:hover { background:#2b4f7a; }
-  #cart-container { position:fixed; top:20px; right:20px; background:#3B5998; color:white; padding:8px 14px; border-radius:20px; cursor:pointer; font-weight:bold; }
-  #cart-count { font-weight:700; margin-left:5px; }
+body { font-family:'Roboto', sans-serif; margin:0; padding:0; background:#f5f5f5; color:#333; scroll-behavior:smooth; }
+header { background:#000; color:white; padding:20px 0; text-align:center; position:relative; }
+#logo { width:120px; display:block; margin:0 auto 10px; }
+nav { display:flex; justify-content:center; gap:20px; background:#023e8a; padding:10px 0; position:sticky; top:0; z-index:50; }
+nav a { color:white; text-decoration:none; font-weight:bold; }
+nav a:hover { text-decoration:underline; }
+.hero { position:relative; background-image:url('https://i.postimg.cc/prR9bQ5j/IMG-3869.jpg'); background-size:cover; background-position:center; height:450px; display:flex; align-items:center; justify-content:center; text-align:center; color:white; font-size:3em; font-weight:bold; overflow:hidden; }
+.hero::before { content:""; position:absolute; inset:0; background:rgba(0,0,0,0.45); }
+.hero h1 { position:relative; z-index:1; text-shadow:2px 2px 10px rgba(0,0,0,0.8); }
+.content { padding:40px; max-width:1000px; margin:auto; }
+.tabs { display:flex; flex-wrap:wrap; gap:10px; margin-bottom:20px; }
+.tab-btn { padding:8px 15px; background:#eee; border:none; border-radius:5px; cursor:pointer; font-weight:bold; transition:background-color 0.2s; }
+.tab-btn:hover { background-color:#ccc; }
+.tab-btn.active { background-color:#023e8a; color:white; }
+
+.product-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:20px; }
+.product { background:white; padding:20px; border-radius:10px; box-shadow:0 4px 6px rgba(0,0,0,0.1); text-align:center; transition:transform 0.2s; }
+.product:hover { transform:translateY(-5px); }
+.product img { max-width:100%; border-radius:10px; }
+.product h3 { margin:10px 0 5px 0; }
+.product p { margin:5px 0; }
+.price { font-weight:700; color:#0077b6; font-size:1.2em; }
+.buy-button { display:inline-block; padding:10px 20px; background-color:#3B5998; color:white; text-decoration:none; border-radius:5px; font-weight:bold; margin-top:10px; cursor:pointer; border:none; }
+.buy-button:hover { background-color:#005f8c; }
+.cart-icon { position:absolute; top:20px; right:20px; cursor:pointer; background:#3B5998; color:white; width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold; font-size:18px; z-index:100; }
+
+.cart-page { position:fixed; top:0; left:0; width:100%; height:100%; background:#f5f5f5; z-index:90; overflow-y:auto; display:none; padding-top:80px; }
+.cart-content-wrapper { max-width:800px; margin:20px auto; padding:20px; background:white; border-radius:8px; box-shadow:0 2px 4px rgba(0,0,0,0.1); }
+.cart-item { display:flex; align-items:flex-start; padding:20px 0; border-bottom:1px solid #eee; }
+.item-image { width:80px; flex-shrink:0; margin-right:15px; }
+.item-image img { width:100%; height:auto; border-radius:5px; }
+.item-details { flex-grow:1; }
+.item-details strong { font-size:1.1em; display:block; margin-bottom:5px; }
+.item-actions button { background:none; border:1px solid #ccc; padding:8px 15px; margin-right:10px; border-radius:5px; cursor:pointer; font-size:0.9em; }
+.item-actions .remove-btn { color:#cc0000; border-color:#cc0000; }
+.item-pricing { display:grid; grid-template-columns:1fr 1fr; gap:10px; max-width:300px; margin-top:15px; }
+.qty-group { display:flex; align-items:center; }
+.qty-group input { margin-right:5px; width:50px; padding:5px; border:1px solid #ccc; border-radius:3px; }
+.qty-group .update-btn { background:#023e8a; color:white; border:none; padding:7px 10px; border-radius:5px; cursor:pointer; line-height:1.2; }
+.qty-group .update-btn:hover { background:#002a5c; }
+.cart-summary { max-width:400px; margin:30px 0 0 auto; padding-top:15px; border-top:2px solid #ddd; }
+.summary-line { display:flex; justify-content:space-between; padding:5px 0; }
+.checkout-button-container { text-align:center; margin-top:20px; }
+.checkout-button { background:#023e8a; color:white; padding:15px 40px; font-size:1.2em; font-weight:bold; border:none; border-radius:5px; cursor:pointer; width:100%; }
+.checkout-button:hover { background:#002a5c; }
+
+#about, #contact { padding:40px; max-width:1000px; margin:auto; background:white; border-radius:10px; box-shadow:0 4px 6px rgba(0,0,0,0.1); margin-bottom:40px; }
+#about h2, #contact h2 { margin-bottom:20px; color:#023e8a; }
+#contact p { margin:5px 0; }
 </style>
 </head>
 <body>
 
 <header>
-  <h1>Super Lure</h1>
+<img id="logo" src="https://i.postimg.cc/VsD5TC4m/IMG-3871.jpg" alt="Super Lure Logo">
+<b>Ready for your next catch?</b>
+<div class="cart-icon" id="cart-icon"><i class="fas fa-shopping-cart"></i></div>
 </header>
 
-<!-- Cart Icon -->
-<div id="cart-container">
-  Cart: <span id="cart-count">0</span> 🛒
-  <button id="checkout-btn" style="margin-left:10px;">Checkout</button>
-</div>
+<nav id="main-nav">
+<a href="#home">Home</a>
+<a href="#products">Products</a>
+<a href="#about">About</a>
+<a href="#contact">Contact</a>
+</nav>
 
-<section class="product-list">
-  <div class="product">
-    <img src="images/lure1.jpg" alt="Crankbait">
-    <div class="product-name">Crankbait</div>
-    <div class="product-price">$7.60 CAD</div>
-    <button onclick="addToCart(1,'Crankbait',7.60)">Add to Cart</button>
-  </div>
-  <div class="product">
-    <img src="images/lure2.jpg" alt="Spinner">
-    <div class="product-name">Spinner</div>
-    <div class="product-price">$5.50 CAD</div>
-    <button onclick="addToCart(2,'Spinner',5.50)">Add to Cart</button>
-  </div>
-  <div class="product">
-    <img src="images/lure3.jpg" alt="Jig">
-    <div class="product-name">Jig</div>
-    <div class="product-price">$6.30 CAD</div>
-    <button onclick="addToCart(3,'Jig',6.30)">Add to Cart</button>
-  </div>
-  <!-- Add more products as needed -->
+<div id="main-content-sections">
+<section class="hero" id="home">
+<h1><i>Memories lie just a cast away.</i></h1>
 </section>
 
+<section class="content" id="products">
+<h2>Our Products</h2>
+
+<!-- Tabs -->
+<div class="tabs">
+  <button class="tab-btn active" data-category="all">All</button>
+  <button class="tab-btn" data-category="X Series">X Series</button>
+  <button class="tab-btn" data-category="Hybrids">Hybrids</button>
+  <button class="tab-btn" data-category="DeepWater">DeepWater</button>
+  <button class="tab-btn" data-category="Topwater">Topwater</button>
+  <button class="tab-btn" data-category="SwimBaits">SwimBaits</button>
+  <button class="tab-btn" data-category="Spoons and Spinners">Spoons & Spinners</button>
+  <button class="tab-btn" data-category="Weedless">Weedless</button>
+  <button class="tab-btn" data-category="Minnows">Minnows</button>
+  <button class="tab-btn" data-category="Other">Other</button>
+</div>
+
+<!-- Product Grid -->
+<div class="product-grid" id="product-grid">
+
+<!-- Example Products -->
+<div class="product" data-category="X Series" data-name="Super Lure X1" data-price="7.59" data-stock="SLX1-01" data-desc="Northern Pike, shiny finish." data-img="https://i.postimg.cc/d02dzfky/IMG-3859.png">
+<img src="https://i.postimg.cc/d02dzfky/IMG-3859.png" alt="Super Lure X1">
+<h3>Super Lure X1</h3>
+<p>Designed for Northern Pike with shiny finish and lifelike swim.</p>
+<p class="price">$7.59 CAD</p>
+<button class="buy-button">Add to Cart</button>
+</div>
+
+<div class="product" data-category="Hybrids" data-name="Super Lure BX" data-price="7.59" data-stock="SLBX-02" data-desc="Crafted for bass, shimmering finish." data-img="https://i.postimg.cc/J7jPv212/IMG-3884.jpg">
+<img src="https://i.postimg.cc/J7jPv212/IMG-3884.jpg" alt="Super Lure BX">
+<h3>Super Lure BX</h3>
+<p>Crafted for bass, with shimmering finish.</p>
+<p class="price">$7.59 CAD</p>
+<button class="buy-button">Add to Cart</button>
+</div>
+
+<div class="product" data-category="Weedless" data-name="Super Lure WDX" data-price="8.49" data-stock="SLWDX-03" data-desc="Perfect for shallow, weedy waters." data-img="https://via.placeholder.com/80x80.png?text=Lure+WDX">
+<img src="https://via.placeholder.com/80x80.png?text=Lure+WDX" alt="Super Lure WDX">
+<h3>Super Lure WDX</h3>
+<p>Perfect for shallow, weedy waters.</p>
+<p class="price">$8.49 CAD</p>
+<button class="buy-button">Add to Cart</button>
+</div>
+
+<!-- Add more products as needed and assign appropriate data-category -->
+
+</div>
+</section>
+
+<section id="about">
+<h2>About Super Lure</h2>
+<p>Super Lure is dedicated to providing the highest quality fishing lures to help anglers catch their dream fish. Whether you fish in rivers, lakes, or oceans, our products are designed for performance, durability, and style.</p>
+<p>Crafted and tested in Canada, every lure is designed with precision to target specific species and conditions, ensuring you have the best chance at landing that trophy catch.</p>
+</section>
+
+<section id="contact">
+<h2>Contact Us</h2>
+<p><strong>Email:</strong> superlure10@gmail.com</p>
+<p><strong>Phone:</strong> +1 (519)-888-7888</p>
+</section>
+</div>
+
+<div class="cart-page" id="cart-page">
+<div class="cart-content-wrapper">
+<button id="back-to-shop-btn" class="buy-button">&larr; Back to Products</button>
+<h2>Your Shopping Cart</h2>
+<div id="cart-items-list"></div>
+<div class="cart-summary">
+<div class="summary-line"><span>SUBTOTAL</span><span id="summary-subtotal">$0.00</span></div>
+<div class="summary-line"><span>SHIPPING</span><span id="summary-shipping">$0.00</span></div>
+<hr>
+<div class="summary-line"><strong>ORDER TOTAL</strong><strong id="summary-total">$0.00</strong></div>
+</div>
+<div class="checkout-button-container">
+<button class="checkout-button" id="proceed-to-checkout-btn">PROCEED TO CHECKOUT</button>
+</div>
+</div>
+</div>
+
 <script>
-// Load existing cart or start empty
-let cart = JSON.parse(localStorage.getItem('cart')) || [];
+let cart=[];
+const SHIPPING_PER_ITEM=1.28;
+const MAX_QTY=50;
+const cartIcon=document.getElementById('cart-icon');
+const cartPage=document.getElementById('cart-page');
+const mainSections=document.getElementById('main-content-sections');
+const navBar=document.getElementById('main-nav');
+const backBtn=document.getElementById('back-to-shop-btn');
+const cartList=document.getElementById('cart-items-list');
+const subtotalEl=document.getElementById('summary-subtotal');
+const shippingEl=document.getElementById('summary-shipping');
+const totalEl=document.getElementById('summary-total');
+const proceedBtn=document.getElementById('proceed-to-checkout-btn');
 
-// Function to add items to cart
-function addToCart(id, name, price, qty = 1) {
-  const index = cart.findIndex(item => item.id === id);
-  if (index > -1) {
-    cart[index].qty += qty;
-  } else {
-    cart.push({ id, name, price, qty });
-  }
-  localStorage.setItem('cart', JSON.stringify(cart));
-  renderCartCount();
-  alert(`${name} added to cart!`);
+function toggleCart(show){
+  if(show===undefined) show=cartPage.style.display==='none'||cartPage.style.display==='';
+  if(show){ mainSections.style.display='none'; navBar.style.display='none'; cartPage.style.display='block'; updateCart(); }
+  else { mainSections.style.display='block'; navBar.style.display='flex'; cartPage.style.display='none'; }
 }
 
-// Update cart count display
-function renderCartCount() {
-  const countEl = document.getElementById('cart-count');
-  if (countEl) countEl.textContent = cart.reduce((s,i)=>s+i.qty,0);
+function addToCart(product){
+  const index=cart.findIndex(p=>p.name===product.name);
+  if(index>-1){
+    if(cart[index].qty+1>MAX_QTY){
+      alert(`You can only purchase up to ${MAX_QTY} items of ${product.name}.`);
+      return;
+    }
+    cart[index].qty+=1;
+  } else { cart.push({...product,qty:1}); }
+  updateCart();
 }
-renderCartCount();
 
-// Checkout button
-document.getElementById('checkout-btn').addEventListener('click', ()=>{
-  if (!cart || cart.length === 0) {
-    alert('Your cart is empty!');
-    return;
+function removeItem(index){ cart.splice(index,1); updateCart(); }
+
+function updateQty(index){
+  let qty=parseInt(document.getElementById(`qty-${index}`).value);
+  if(qty>MAX_QTY){ alert(`Maximum quantity for this product is ${MAX_QTY}.`); qty=MAX_QTY; document.getElementById(`qty-${index}`).value=MAX_QTY; }
+  if(qty>0) cart[index].qty=qty; else { removeItem(index); return; }
+  updateCart();
+}
+
+function updateCart(){
+  cartList.innerHTML='';
+  let subtotal=0,totalQty=0;
+  if(cart.length===0){ cartList.innerHTML='<p>Your cart is empty.</p>'; }
+  else{
+    cart.forEach((item,index)=>{
+      subtotal+=item.price*item.qty;
+      totalQty+=item.qty;
+      const div=document.createElement('div');
+      div.className='cart-item';
+      div.innerHTML=`<div class="item-image"><img src="${item.img}" alt="${item.name}"></div>
+      <div class="item-details"><strong>${item.name}</strong>
+      <div class="item-actions"><button class="remove-btn" onclick="removeItem(${index})">Remove</button></div></div>
+      <div class="item-pricing"><label>Price:</label><span>$${item.price.toFixed(2)}</span>
+      <label>Qty:</label>
+      <div class="qty-group"><input type="number" id="qty-${index}" min="1" max="${MAX_QTY}" value="${item.qty}">
+      <button class="update-btn" onclick="updateQty(${index})">Update</button></div></div>`;
+      cartList.appendChild(div);
+    });
   }
-  window.location.href = 'checkout.html'; // redirect to your checkout page
+  subtotalEl.textContent=`$${subtotal.toFixed(2)}`;
+  const shippingCost=totalQty*SHIPPING_PER_ITEM;
+  shippingEl.textContent=`$${shippingCost.toFixed(2)}`;
+  totalEl.textContent=`$${(subtotal+shippingCost).toFixed(2)}`;
+}
+
+document.querySelectorAll('.buy-button').forEach(btn=>{
+  btn.addEventListener('click',e=>{
+    const prod=btn.closest('.product');
+    if(!prod) return;
+    addToCart({name:prod.dataset.name,price:parseFloat(prod.dataset.price),img:prod.dataset.img,stock:prod.dataset.stock,desc:prod.dataset.desc});
+    toggleCart(true);
+  });
+});
+
+cartIcon.addEventListener('click',()=>toggleCart(true));
+backBtn.addEventListener('click',()=>toggleCart(false));
+proceedBtn.addEventListener('click',()=>{
+  localStorage.setItem('cart',JSON.stringify(cart));
+  window.location.href='checkout.html';
+});
+
+// Tabs functionality
+const tabButtons=document.querySelectorAll('.tab-btn');
+const products=document.querySelectorAll('.product');
+tabButtons.forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    tabButtons.forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    const category=btn.dataset.category;
+    products.forEach(prod=>{
+      prod.style.display=(category==='all'||prod.dataset.category===category)?'block':'none';
+    });
+  });
 });
 </script>
-
 </body>
 </html>
