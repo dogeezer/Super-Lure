@@ -5,7 +5,6 @@ const xml2js = require('xml2js');
 const cors = require('cors');
 // server.js (or app.js)
 
-// 1. Import express
 const app = express();
 
 // 2. Middleware to parse JSON
